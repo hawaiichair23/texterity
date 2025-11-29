@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Texterity Controls</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Instrument+Serif&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-y: auto;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ffffff;
+            border-bottom: 2px solid #404040;
+            padding-bottom: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 6px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 35px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #0d6efd;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            color: #0d6efd;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 8px;
+            background: #0d6efd;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: #0b5ed7;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 6px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            resize: vertical;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>TEXTERITY CONTROLS</h2>    <div class="control-group">
+        <label>Input Mode</label>
+        <select id="input-mode">
+            <option value="manual">Manual Text Input</option>
+            <option value="file">Watch Text File</option>
+        </select>
+    </div>    <div class="control-group" id="manual-input-group">
+        <label>Text Input</label>
+        <textarea id="text-input" rows="3" placeholder="Enter text to display...">Love all, trust a few, do wrong to none.</textarea>
+        <button id="update-text-btn" style="padding: 6px; font-size: 13px;">Update Text</button>
+    </div>
+
+    <div class="control-group" id="file-input-group" style="display: none;">
+        <label>Text File to Watch</label>
+        <input type="text" id="file-path-display" placeholder="No file selected" readonly>
+        <button id="select-file-btn">Select File</button>
+        <div style="margin-top: 10px; font-size: 11px; color: #888;">
+            File will be monitored for changes and text will auto-update.
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>Font Size</label>
+        <input type="range" id="font-size" min="12" max="144" value="48">
+        <span class="range-value" id="font-size-value">48px</span>
+    </div>    <div class="control-group">
+        <label>Text Color</label>
+        <input type="color" id="text-color" value="#ffffff" style="height: 30px;">
+    </div>
+
+    <div class="control-group">
+        <label>Background Color</label>
+        <input type="color" id="bg-color" value="#000000" style="height: 30px;">
+        <label style="margin-top: 10px; display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="bg-transparent" style="width: auto; margin-right: 8px;">
+            Transparent
+        </label>
+    </div>
+
+    <div class="control-group">
+        <label style="display: flex; align-items: center; cursor: pointer; text-transform: none;">
+            <input type="checkbox" id="loop-animation" style="width: auto; margin-right: 8px;" checked>
+            Loop Animation
+        </label>
+    </div>    <div class="control-group">
+        <label>Fonts</label>
+        <select id="font-family">
+            <option value="Inter">Inter</option>
+            <option value="Instrument Serif" selected>Instrument Serif</option>
+            <option value="Arial">Arial</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+            <option value="Impact">Impact</option>
+        </select>
+        <button id="import-font-btn" style="margin-top: 10px; background: #6c757d;">Import Custom Font</button>
+        <input type="file" id="font-file-input" accept=".ttf,.otf,.woff,.woff2" style="display: none;">
+    </div>
+
+    <script src="control.js"></script>
+</body>
+</html>
