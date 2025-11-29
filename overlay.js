@@ -85,9 +85,7 @@ async function initPixi() {
         dragOffset.x = position.x - bounds.x;
         dragOffset.y = position.y - bounds.y;
         app.stage.on('pointermove', onDragMove);
-    }
-
-    function onDragMove(event) {
+    }    function onDragMove(event) {
         if (isDragging) {
             const position = event.data.global;
             const bounds = textContainer.getBounds();
@@ -102,8 +100,14 @@ async function initPixi() {
                 child.y += deltaY;
             });
 
-            // Update hover box position
+            // Update customPosition continuously during drag
             const newBounds = textContainer.getBounds();
+            customPosition = {
+                x: newBounds.x + newBounds.width / 2,
+                y: newBounds.y + newBounds.height / 2
+            };
+
+            // Update hover box position
             hoverBox.clear();
             hoverBox.rect(newBounds.x - 7, newBounds.y, newBounds.width + 20, newBounds.height + 5);
             hoverBox.stroke({ width: 1, color: 0xFFFFFF });
