@@ -2031,23 +2031,18 @@ async function loadGoogleFont(fontFamily) {
     if (loadedGoogleFonts.has(fontFamily)) return;
     
     try {
-        // Convert font name to Google Fonts API format
         const fontName = fontFamily.replace(/ /g, '+');
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;700&display=swap`;
         document.head.appendChild(link);
         
-        // Wait for font to load
         await document.fonts.load(`12px "${fontFamily}"`);
         loadedGoogleFonts.add(fontFamily);
         
-        console.log(`[Fonts] Loaded Google Font: ${fontFamily}`);
-        
-        // Also send to overlay
         ipcRenderer.send('load-google-font', { fontFamily });
     } catch (error) {
-        console.error(`[Fonts] Failed to load Google Font ${fontFamily}:`, error);
+        // Silent fail
     }
 }
 

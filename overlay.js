@@ -895,7 +895,6 @@ window.addEventListener('resize', () => {
 // Load custom font
 ipcRenderer.on('load-custom-font', async (event, { fontFamily, fontPath }) => {
     try {
-        // Use CSS @font-face to load the font
         const style = document.createElement('style');
         style.textContent = `
             @font-face {
@@ -905,49 +904,24 @@ ipcRenderer.on('load-custom-font', async (event, { fontFamily, fontPath }) => {
         `;
         document.head.appendChild(style);
         
-        // Wait for font to load
         await document.fonts.load(`12px "${fontFamily}"`);
-        console.log(`[Fonts] Loaded custom font: ${fontFamily}`);
     } catch (error) {
-        console.error(`[Fonts] Failed to load custom font ${fontFamily}:`, error);
+        // Silent fail
     }
 });
 
 // Load Google Font
 ipcRenderer.on('load-google-font', async (event, { fontFamily }) => {
     try {
-        // Convert font name to Google Fonts API format
         const fontName = fontFamily.replace(/ /g, '+');
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;700&display=swap`;
         document.head.appendChild(link);
         
-        // Wait for font to load
         await document.fonts.load(`12px "${fontFamily}"`);
-        console.log(`[Fonts] Loaded Google Font: ${fontFamily}`);
     } catch (error) {
-        console.error(`[Fonts] Failed to load Google Font ${fontFamily}:`, error);
-    }
-});
-        
-        // CRITICAL: Force browser to actually load the font
-        // Create invisible text to trigger font load
-        const testDiv = document.createElement('div');
-        testDiv.style.fontFamily = fontFamily;
-        testDiv.style.position = 'absolute';
-        testDiv.style.opacity = '0';
-        testDiv.textContent = 'Font Load Test';
-        document.body.appendChild(testDiv);
-        
-        // Wait for font to actually load
-        await document.fonts.load(`12px "${fontFamily}"`);
-        
-        // Clean up test element
-        document.body.removeChild(testDiv);
-        
-    } catch (error) {
-        console.error(`[Overlay] Failed to load ${fontFamily}:`, error);
+        // Silent fail
     }
 });
 
