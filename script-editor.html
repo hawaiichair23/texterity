@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Script Editor</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Monaco Editor CSS -->
+    <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    
+    <!-- Allotment CSS -->
+    <link rel="stylesheet" href="node_modules/allotment/dist/style.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --focus-border: #3e73ca;
+            --separator-border: #3e3e3e;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            background: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #2d2d2d;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3e3e3e;
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .script-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+            background: #252525;
+            border: 1px solid #3e3e3e;
+            padding: 6px 12px;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+        
+        .script-name:focus {
+            outline: none;
+            border-color: #3e73ca;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #3e73ca;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #4a7ab8;
+        }
+        
+        button.secondary {
+            background: #4a4a4a;
+        }
+        
+        button.secondary:hover {
+            background: #555;
+        }
+        
+        button.danger {
+            background: #c42b1c;
+        }
+        
+        button.danger:hover {
+            background: #e81123;
+        }
+        
+        /* Main content area with split view */
+        .content-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #monaco-editor-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #monaco-editor {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .status-bar {
+            background: #007acc;
+            padding: 4px 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .status-bar.running {
+            background: #16825d;
+        }
+        
+        .status-bar.stopped {
+            background: #3e3e3e;
+            color: #888;
+        }
+        
+        .console-panel {
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .console-header {
+            background: #2d2d2d;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3e3e3e;
+            flex-shrink: 0;
+        }
+        
+        .console-header button {
+            padding: 4px 10px;
+            font-size: 10px;
+        }
+        
+        .console-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        
+        .console-content::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .console-content::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        .console-content::-webkit-scrollbar-thumb {
+            background: #3e3e3e;
+            border-radius: 5px;
+        }
+        
+        .console-content::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
+        
+        .console-line {
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .console-line.error {
+            color: #f48771;
+        }
+        
+        .console-line.log {
+            color: #cccccc;
+        }
+        
+        .console-line.warn {
+            color: #dcdcaa;
+        }
+        
+        /* Allotment customization */
+        .split-view {
+            background: #1e1e1e;
+        }
+        
+        .sash {
+            background: #2d2d2d;
+        }
+        
+        .sash-hover {
+            background: #3e73ca;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-left">
+            <input type="text" class="script-name" id="script-name" placeholder="Script Name">
+        </div>
+        <div class="header-actions">
+            <button id="run-btn">▶ Run</button>
+            <button id="stop-btn" class="secondary">⏹ Stop</button>
+        </div>
+    </div>
+    
+    <div class="content-area" id="content-area">
+        <!-- Allotment will be created here -->
+    </div>
+    
+    <div class="status-bar stopped" id="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="editor-info">JavaScript</span>
+    </div>
+
+    <!-- Load React -->
+    <script>
+        // Make React available globally for Allotment
+        window.React = require('react');
+        window.ReactDOM = require('react-dom');
+    </script>
+    <script src="script-editor.js"></script>
+</body>
+</html>

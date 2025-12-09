@@ -1,0 +1,102 @@
+{
+  "version": "1.0",
+  "textObjects": [
+    {
+      "id": 1,
+      "name": "Text Object 1",
+      "inputMode": "manual",
+      "text": "Love all, trust a few, do wrong to none.",
+      "filePath": null,
+      "positionX": 640,
+      "positionY": 346,
+      "fontSize": 33,
+      "fontFamily": "Instrument Serif",
+      "color": 16777215,
+      "loopAnimation": true,
+      "outlineEnabled": true,
+      "outlineColor": 0,
+      "outlineWidth": 4,
+      "animationPreset": "animation-1",
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "name": "Wave Text",
+      "inputMode": "manual",
+      "text": "HELLO",
+      "filePath": null,
+      "positionX": 1053,
+      "positionY": 168,
+      "fontSize": 60,
+      "fontFamily": "Instrument Serif",
+      "color": 16777215,
+      "loopAnimation": false,
+      "outlineEnabled": true,
+      "outlineColor": 0,
+      "outlineWidth": 4,
+      "animationPreset": null,
+      "createdByScript": 1,
+      "collapsed": false
+    },
+    {
+      "id": 3,
+      "name": "Text Object 3",
+      "inputMode": "manual",
+      "text": "DEOXYRIBONUCLEICACID",
+      "filePath": null,
+      "positionX": 966,
+      "positionY": 582,
+      "fontSize": 52,
+      "fontFamily": "Instrument Serif",
+      "color": 16711935,
+      "loopAnimation": false,
+      "outlineEnabled": true,
+      "outlineColor": 0,
+      "outlineWidth": 4,
+      "animationPreset": null,
+      "createdByScript": 2,
+      "collapsed": false
+    }
+  ],
+  "animationObjects": [
+    {
+      "id": "animation-1",
+      "name": "Animation 1",
+      "animationType": "hop",
+      "hopMax": 3,
+      "hopMin": -2,
+      "hopVariation": 3,
+      "charDelay": 0.03,
+      "animSpeed": 1,
+      "fadeIn": 0.4,
+      "fadeOut": 0,
+      "loopAnimation": true,
+      "collapsed": false
+    }
+  ],
+  "scripts": [
+    {
+      "id": 1,
+      "name": "Script 1",
+      "code": "// Wave effect example\nconst myText = createTextObject({\n  name: \"Wave Text\",\n  text: \"HELLO\",\n  x: 640,\n  y: 360,\n  fontSize: 60,\n  color: 0xFFFFFF\n});\n\nwaveEffect(myText);",
+      "collapsed": true,
+      "isRunning": true
+    },
+    {
+      "id": 2,
+      "name": "Script 2",
+      "code": "const myText = createTextObject({\n  text: \"DEOXYRIBONUCLEICACID\",\n  x: 640,\n  y: 360,\n  fontSize: 52,\n  color: 0xFF00FF\n});\n\nlet time = 0;\nsetInterval(() => {\n  const offsets = [];\n  const textLength = 20;\n  \n  for (let i = 0; i < textLength; i++) {\n    const t = (i / textLength) * Math.PI * 6 + time;\n    \n    // Double helix equations\n    const helix1Y = Math.sin(t) * 30;\n    const helix1Z = Math.cos(t) * 60;\n    \n    // Use Z for depth simulation (scale effect)\n    const x = helix1Z;\n    const y = helix1Y;\n    \n    offsets.push({ x, y });\n  }\n  \n  setCharacterOffsets(myText, offsets);\n  time += 0.08;\n}, 16);",
+      "collapsed": false,
+      "isRunning": true
+    }
+  ],
+  "globalSettings": {
+    "backgroundColor": 0,
+    "backgroundTransparent": false,
+    "hopMin": 1,
+    "hopMax": 3,
+    "charDelayStep": 0.023,
+    "animationDuration": 0.4
+  },
+  "savedAt": "2025-12-09T02:57:43.541Z"
+}

@@ -1,181 +1,857 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Texterity Controls</title>
+    <meta charset="UTF-8">    <title>Texterity Controls</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Instrument+Serif&display=swap" rel="stylesheet">
     
-    <style>
-        * {
+    <!-- Monaco Editor CSS -->
+    <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <style>        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }        body {
-            background: #1a1a1a;
-            color: #e0e0e0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --accent-color: #3e73ca;
+        }
+        
+        body {
+            background: #242424;
+            color: #b8b8b8;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-size: 12px;
+            overflow-y: auto;
+            height: 100vh;
+            display: flex;
+        }        .sidebar {
+            width: 42px;
+            background: #161616;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 0;
+            gap: 3px;
+        }        .sidebar-icon {
+            width: 42px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+            margin-left: 0;
+            padding-right: 0;
+        }
+        
+        .sidebar-icon:hover {
+            background: #3b3b3b;
+        }
+        
+        .sidebar-icon.active {
+            background: #242424;
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-left: 4px;
+            width: 38px;
+        }
+        
+        .sidebar-icon svg {
+            width: 18px;
+            height: 18px;
+        }        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .tab-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-x: hidden;
             overflow-y: auto;
         }
 
-        h2 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #ffffff;
-            border-bottom: 2px solid #404040;
-            padding-bottom: 8px;
+        .header {
+            background: #2b2b2b;
+            padding: 10px 15px;
+            border-bottom: 1px solid #0d0d0d;
+        }
+
+        .header h2 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e0e0e0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }        .global-settings {
+            background: #2e2e2e;
+            padding: 10px 15px;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            padding-left: 20px;
         }
 
-        label {
+        .control-group:last-child {
+            margin-bottom: 0;
+        }        .control-group.dark-bg {
+            background: transparent;
+            padding: 8px 10px;
+            padding-left: 30px;
+            margin-left: -10px;
+            margin-right: -10px;
+            border-radius: 0px;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #3b3b3b;
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }        label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             font-size: 11px;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select {
+            color: #aaa;
+            font-weight: 500;
+        }        input[type="color"] {
             width: 100%;
-            padding: 6px;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            color: #e0e0e0;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        input[type="color"] {
-            width: 100%;
-            height: 35px;
-            background: #0a0a0a;
-            border: 1px solid #333;
+            height: 24px;
+            background: #3b3b3b;
+            border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+        
+        input[type="color"]:hover {
+            background: #444;
+        }
 
-        input[type="range"] {
-            width: 100%;
-            height: 5px;
-            background: #333;
-            border-radius: 3px;
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }        .checkbox-row input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+            appearance: none;
+            -webkit-appearance: none;
+            background: #161616;
+            border: none;
+            border-radius: 2px;
+        }
+        
+        .checkbox-row input[type="checkbox"]:checked {
+            background: var(--accent-color);
+        }
+        
+        .checkbox-row input[type="checkbox"]:checked::after {
+            content: '✓';
+            display: block;
+            text-align: center;
+            color: white;
+            font-size: 10px;
+            line-height: 10px;
+        }
+
+        .checkbox-row label {
+            margin: 0;
+            cursor: pointer;
+            color: #b8b8b8;
+        }
+
+        /* Text Objects List */        .text-objects-container {
+            padding: 6px 10px;
+            flex: 1;
+        }        .text-object {
+            background: #2e2e2e;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            transition: box-shadow 0.1s, background 0.1s;
+        }        .text-object.focused {
+            background: #353535;
+            box-shadow: 0 0 0 1px rgba(212, 199, 122, 0.5);
+        }
+
+        .text-object-header {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            user-select: none;
+            background: #2e2e2e;
+        }
+
+        .text-object-header:hover {
+            background: #333333;
+        }        .collapse-arrow {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            transition: transform 0.1s;
+            flex-shrink: 0;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23838383' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px;
+            transform: rotate(0deg);
+        }
+
+        .text-object.collapsed .collapse-arrow {
+            transform: rotate(-90deg);
+        }        .text-object-name {
+            flex: 1;
+            font-size: 11px;
+            font-weight: 400;
+            color: #e0e0e0;
+            background: #1a1a1a !important;
+            border: none;
             outline: none;
+            padding: 4px 6px;
+            border-radius: 3px;
+        }
+
+        .delete-btn {
+            width: 18px;
+            height: 18px;
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            color: #ff5555;
+        }
+
+        .text-object-body {
+            padding: 10px;
+        }
+
+        .text-object.collapsed .text-object-body {
+            display: none;
+        }        select, input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 5px 7px;
+            background: #444;
+            border: none;
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+        }        select:hover, input[type="text"]:hover, input[type="number"]:hover, textarea:hover {
+            background: #4a4a4a;
+        }        select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+        }
+        
+        input[type="number"]::selection,
+        input[type="text"]::selection,
+        textarea::selection {
+            background: #5e94ce;
+            color: #ffffff;
+        }
+        
+        /* Hide default number input arrows */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }        select {
+            padding-right: 25px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23838383' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 7px center;
+            background-size: 12px;
+            cursor: pointer;
+        }        textarea {
+            resize: vertical;
+            font-family: 'Inter', monospace;
+            min-height: 50px;
+        }        #script-editor {
+            flex: 1;
+            min-height: 500px;
+            background: #161616;
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 15px;
+            border-radius: 4px;
+            resize: none;
+            tab-size: 4;
+        }
+        
+        #script-editor::placeholder {
+            color: #666;
+        }
+        
+        /* Monaco Editor Container */
+        .monaco-editor-container {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #3b3b3b;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        /* Monaco Editor Customization */
+        .monaco-editor .margin {
+            background-color: #1e1e1e !important;
+        }
+        
+        .monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+            background: #3b3b3b !important;
+        }        /* Position styling like Blender */
+        .position-container {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            gap: 8px;
+            align-items: start;
+        }
+
+        .position-label {
+            font-size: 11px;
+            color: #999;
+            padding-top: 5px;
+        }
+
+        .position-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .position-row {
+            display: grid;
+            grid-template-columns: 20px 1fr;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .position-row label {
+            margin: 0;
+            font-size: 11px;
+            color: #888;
+        }        .position-row input[type="number"] {
+            width: 100%;
+            text-align: center;
+            padding-left: 20px;
+            padding-right: 20px;
+            background-image: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .position-row input[type="number"]:focus {
+            background-color: #161616;
+            z-index: 1;
+        }        /* Number input wrapper for custom arrows */
+        .number-input-wrapper {
+            position: relative;
+            width: 100%;
+        }        .number-input-wrapper input[type="number"] {
+            width: 100%;
+            padding-right: 24px;
+            padding-left: 24px;
+            text-align: left; /* Changed from center to allow manual positioning */
+            text-indent: 0; /* Will be set dynamically by JS */
+        }        /* Suffix positioned dynamically by JS */
+        .number-suffix {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #e0e0e0;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 3;
+            left: 50%;
+        }
+        
+        /* Arrow buttons */
+        .number-arrow {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: transparent;
+            transition: background 0.15s;
+            pointer-events: all;
+            z-index: 2;
+        }
+        
+        .number-arrow:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .number-arrow-left {
+            left: 0;
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .number-arrow-right {
+            right: 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .number-arrow svg {
+            width: 12px;
+            height: 12px;
+            pointer-events: none;
+        }        /* Middle hover zone - only show when not hovering arrows */
+        .number-input-wrapper input[type="number"]:hover {
+            background-color: #4a4a4a;
+        }
+        
+        /* When focused or dragging, show darker background (higher specificity) */
+        .number-input-wrapper input[type="number"]:focus,
+        .number-input-wrapper input[type="number"]:active {
+            background-color: #161616;
+        }        input[type="range"] {
+            width: 100%;
+            height: 3px;
+            background: #3b3b3b;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]:hover {
+            background: #444;
         }
 
         input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #0d6efd;
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            background: #5e94ce;
             border-radius: 50%;
             cursor: pointer;
+        }        .range-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 40px;
+            gap: 6px;
+            align-items: center;
         }
 
+        .range-row label {
+            margin: 0;
+            text-align: left;
+        }
+        
         .range-value {
-            display: inline-block;
-            margin-left: 10px;
-            color: #0d6efd;
-            font-weight: bold;
-            font-size: 12px;
+            min-width: 35px;
+            text-align: right;
+            color: #5e94ce;
+            font-weight: 600;
+            font-size: 11px;
         }
-
-        button {
+        
+        .compact-row {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .compact-row label {
+            margin: 0;
+            text-align: left;
+        }
+        
+        .compact-row input[type="color"] {
+            height: 22px;
+        }        button {
             width: 100%;
-            padding: 8px;
-            background: #0d6efd;
+            padding: 6px;
+            background: #5e94ce;
             border: none;
             color: white;
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 11px;
+            font-weight: 400;
             cursor: pointer;
-            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         button:hover {
-            background: #0b5ed7;
+            background: #4a7ab8;
         }
 
-        textarea {
-            width: 100%;
-            padding: 6px;
-            background: #0a0a0a;
-            border: 1px solid #333;
+        button.secondary {
+            background: #4a4a4a;
+        }
+
+        button.secondary:hover {
+            background: #555;
+        }        .add-object-btn {
+            margin: 6px 10px;
+            background: #4a4a4a;
+            flex-shrink: 0;
+            width: calc(100% - 20px);
+        }
+
+        .add-object-btn:hover {
+            background: #555;
+        }
+
+        /* Collapsible section */
+        .collapsible-section {
+            margin-bottom: 8px;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px 0;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background: #2b2b2b;
+        }        .collapsible-arrow {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            transition: transform 0.1s;
+            flex-shrink: 0;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23838383' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px;
+            transform: rotate(0deg);
+        }
+
+        .collapsible-section.collapsed .collapsible-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-header label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .collapsible-content {
+            padding-left: 16px;
+            margin-top: 6px;
+        }        .collapsible-section.collapsed .collapsible-content {
+            display: none;
+        }
+
+        input[type="password"] {
+            background: #1a1a1a;
             color: #e0e0e0;
-            border-radius: 4px;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            background: #1a1a1a;
+        }
+        
+        .settings-heading {
             font-size: 13px;
-            resize: vertical;
-            font-family: monospace;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            margin-top: 0;
+        }        .settings-heading:not(:first-child) {
+            margin-top: 20px;
+        }
+        
+        /* Font Picker Styles */
+        .font-picker {
+            position: relative;
+        }
+        
+        .font-picker-selected {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 7px;
+            background: #444;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #e0e0e0;
+        }
+        
+        .font-picker-selected:hover {
+            background: #4a4a4a;
+        }
+        
+        .font-picker-arrow {
+            color: #838383;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        
+        .font-picker-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2e2e2e;
+            border: 1px solid #3b3b3b;
+            border-radius: 4px;
+            margin-top: 2px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .font-picker-search {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a1a;
+            border: none;
+            border-bottom: 1px solid #3b3b3b;
+            color: #e0e0e0;
+            font-size: 11px;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .font-picker-search:focus {
+            outline: none;
+            background: #161616;
+        }
+        
+        .font-picker-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        
+        .font-section-header {
+            padding: 6px 10px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #252525;
+            margin-top: 4px;
+        }
+        
+        .font-section-header:first-child {
+            margin-top: 0;
+        }
+        
+        .font-option {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #e0e0e0;
+        }
+        
+        .font-option:hover {
+            background: #3b3b3b;
         }
     </style>
 </head>
 
-<body>
-    <h2>TEXTERITY CONTROLS</h2>    <div class="control-group">
-        <label>Input Mode</label>
-        <select id="input-mode">
-            <option value="manual">Manual Text Input</option>
-            <option value="file">Watch Text File</option>
-        </select>
-    </div>    <div class="control-group" id="manual-input-group">
-        <label>Text Input</label>
-        <textarea id="text-input" rows="3" placeholder="Enter text to display...">Love all, trust a few, do wrong to none.</textarea>
-        <button id="update-text-btn" style="padding: 6px; font-size: 13px;">Update Text</button>
-    </div>
-
-    <div class="control-group" id="file-input-group" style="display: none;">
-        <label>Text File to Watch</label>
-        <input type="text" id="file-path-display" placeholder="No file selected" readonly>
-        <button id="select-file-btn">Select File</button>
-        <div style="margin-top: 10px; font-size: 11px; color: #888;">
-            File will be monitored for changes and text will auto-update.
+<body>    <div class="sidebar">
+        <div class="sidebar-icon" data-tab="general" title="General Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        </div>        <div class="sidebar-icon active" data-tab="text" title="Text Objects">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-type-icon lucide-type"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></svg>
+        </div>        <div class="sidebar-icon" data-tab="animations" title="Animation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.6 2.7a10 10 0 1 0 5.7 5.7"/><circle cx="12" cy="12" r="2"/><path d="M13.4 10.6 19 5"/></svg>
         </div>
-    </div>
+        <div class="sidebar-icon" data-tab="scripts" title="Scripts">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+        </div>
+        <div class="sidebar-icon" data-tab="sounds" title="Sounds">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-audio-lines-icon lucide-audio-lines">
+                <path d="M2 10v3" />
+                <path d="M6 6v11" />
+                <path d="M10 3v18" />
+                <path d="M14 8v7" />
+                <path d="M18 5v13" />
+                <path d="M22 10v3" />
+            </svg>
+        </div>
+        <div class="sidebar-icon" data-tab="export" title="Streaming">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg>
+        </div>
+        <div style="flex: 1;"></div>
+        <div class="sidebar-icon" data-tab="settings" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3e73ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+    </div>    <div class="main-content">
+        <!-- General Settings Tab -->
+        <div class="tab-content" id="tab-general" style="display: none;">
+            <div class="global-settings">
+                <div class="control-group">
+                    <label>Background Color</label>
+                    <input type="color" id="bg-color" value="#000000">
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="bg-transparent">
+                        <label for="bg-transparent">Transparent</label>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div class="control-group">
-        <label>Font Size</label>
-        <input type="range" id="font-size" min="12" max="144" value="48">
-        <span class="range-value" id="font-size-value">48px</span>
-    </div>    <div class="control-group">
-        <label>Text Color</label>
-        <input type="color" id="text-color" value="#ffffff" style="height: 30px;">
-    </div>
+        <!-- Text Objects Tab -->
+        <div class="tab-content" id="tab-text">
+            <div class="text-objects-container" id="text-objects-list">
+                <!-- Text objects will be dynamically added here -->
+            </div>
+            <button class="add-object-btn" id="add-object-btn">+ Add Text Object</button>
+        </div>        <!-- Animations Tab -->
+        <div class="tab-content" id="tab-animations" style="display: none;">
+            <div class="text-objects-container" id="animation-presets-list">
+                <!-- Animation presets will be dynamically added here -->
+            </div>
+            <button class="add-object-btn" id="add-animation-btn">+ Add Animation</button>
+        </div>        <!-- Scripts Tab -->
+        <div class="tab-content" id="tab-scripts" style="display: none;">
+            <div class="text-objects-container" id="scripts-list">
+                <!-- Scripts will be dynamically added here -->
+            </div>
+            <button class="add-object-btn" id="add-script-btn">+ Add Script</button>
+        </div>
 
-    <div class="control-group">
-        <label>Background Color</label>
-        <input type="color" id="bg-color" value="#000000" style="height: 30px;">
-        <label style="margin-top: 10px; display: flex; align-items: center; cursor: pointer;">
-            <input type="checkbox" id="bg-transparent" style="width: auto; margin-right: 8px;">
-            Transparent
-        </label>
-    </div>
-
-    <div class="control-group">
-        <label style="display: flex; align-items: center; cursor: pointer; text-transform: none;">
-            <input type="checkbox" id="loop-animation" style="width: auto; margin-right: 8px;" checked>
-            Loop Animation
-        </label>
-    </div>    <div class="control-group">
-        <label>Fonts</label>
-        <select id="font-family">
-            <option value="Inter">Inter</option>
-            <option value="Instrument Serif" selected>Instrument Serif</option>
-            <option value="Arial">Arial</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Comic Sans MS">Comic Sans MS</option>
-            <option value="Impact">Impact</option>
-        </select>
-        <button id="import-font-btn" style="margin-top: 10px; background: #6c757d;">Import Custom Font</button>
-        <input type="file" id="font-file-input" accept=".ttf,.otf,.woff,.woff2" style="display: none;">
+        <!-- Sounds Tab -->
+        <div class="tab-content" id="tab-sounds" style="display: none;">
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <p>Sound controls coming soon...</p>
+            </div>
+        </div>        <!-- Export Tab -->
+        <div class="tab-content" id="tab-export" style="display: none;">
+            <div class="global-settings">
+                <div class="control-group">
+                    <label class="settings-heading">Stream Integrations</label>
+                    
+                    <div style="margin-top: 8px;">
+                        <label>Twitch API Key</label>
+                        <input type="password" id="twitch-api-key" placeholder="Enter Twitch API key">
+                        <button id="test-twitch-btn" style="margin-top: 4px;" class="secondary">Test Connection</button>
+                    </div>
+                    
+                    <div style="margin-top: 12px;">
+                        <label>Streamlabs API Key</label>
+                        <input type="password" id="streamlabs-api-key" placeholder="Enter Streamlabs API key">
+                        <button id="test-streamlabs-btn" style="margin-top: 4px;" class="secondary">Test Connection</button>
+                    </div>
+                </div>
+            </div>
+        </div>        <!-- Settings Tab -->
+        <div class="tab-content" id="tab-settings" style="display: none;">
+            <div class="global-settings">
+                <div class="control-group">
+                    <label class="settings-heading">Basic Settings</label>
+                    
+                    <div class="checkbox-row" style="margin-top: 8px;">
+                        <input type="checkbox" id="show-overlay-controls" checked>
+                        <label for="show-overlay-controls">Show Window Controls on Overlay</label>
+                    </div>
+                    
+                    <div style="margin-top: 8px;">
+                        <label>Hotkey to Toggle Window Controls</label>
+                        <input type="text" id="overlay-controls-hotkey" placeholder="Click to set hotkey" readonly>
+                    </div>
+                    
+                    <div class="collapsible-section collapsed" id="default-settings-section" style="margin-top: 12px;">
+                        <div class="collapsible-header" onclick="toggleDefaultSettings()">
+                            <span class="collapsible-arrow"></span>
+                            <label>Default Settings</label>
+                        </div>                        <div class="collapsible-content">
+                            <div class="position-container">
+                                <div class="position-label">Font Size</div>
+                                <div class="position-inputs">
+                                    <div class="position-row">
+                                        <label></label>
+                                        <div class="number-input-wrapper">
+                                            <div class="number-arrow number-arrow-left" data-input-id="default-font-size" data-action="decrement">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#838383" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="m15 18-6-6 6-6"/>
+                                                </svg>                                            </div>                                            <input type="number" id="default-font-size" min="12" max="144" step="1" value="48">
+                                            <div class="number-arrow number-arrow-right" data-input-id="default-font-size" data-action="increment">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#838383" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="m9 18 6-6-6-6"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <label style="margin-top: 8px;">Default Starting Text</label>
+                            <textarea id="default-starting-text" placeholder="Enter default text for new objects">New Text Object</textarea>                            <label style="margin-top: 8px;">Default Animation Preset</label>
+                            <select id="default-animation-preset">
+                                <option value="hop" selected>Hop</option>
+                                <option value="slide">Slide</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="fade">Fade</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-row" style="margin-top: 12px;">
+                        <input type="checkbox" id="auto-save-enabled">
+                        <label for="auto-save-enabled">Auto-Save Project</label>
+                    </div>
+                    
+                    <div style="margin-top: 8px;">
+                        <label>Auto-Save Interval</label>
+                        <select id="auto-save-interval">
+                            <option value="1">Every 1 Minute</option>
+                            <option value="5" selected>Every 5 Minutes</option>
+                            <option value="10">Every 10 Minutes</option>
+                        </select>                    </div>                    <div style="margin-top: 12px;">
+                        <label>Accent Color</label>
+                        <input type="color" id="accent-color" value="#3e73ca">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="control.js"></script>
