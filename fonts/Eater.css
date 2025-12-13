@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Eater';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Eater.ttf') format('truetype');
+}

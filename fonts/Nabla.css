@@ -1,0 +1,10 @@
+@font-face {
+  font-family: 'Nabla';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Nabla.ttf') format('truetype');
+}
+body {
+  --google-font-color-nabla:none;
+}

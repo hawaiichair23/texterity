@@ -6,7 +6,58 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Instrument+Serif&display=swap" rel="stylesheet">    <style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Instrument+Serif&display=swap" rel="stylesheet">    <!-- Load all local fonts from fonts/ directory -->
+    <script>
+        // Dynamically load all fonts from fonts/ directory on startup
+        (async function() {
+            const fs = require('fs');
+            const path = require('path');
+            const fontsDir = path.join(__dirname, 'fonts');
+            
+            try {
+                const files = fs.readdirSync(fontsDir);
+                const ttfFiles = files.filter(f => f.endsWith('.ttf'));
+                
+                const fontNames = [];
+                
+                ttfFiles.forEach(file => {
+                    const fontName = file.replace('.ttf', '').replace(/-/g, ' ');
+                    fontNames.push(fontName);
+                    const fontPath = path.join(fontsDir, file);
+                    
+                    // Read font file as base64
+                    const fontData = fs.readFileSync(fontPath);
+                    const base64Font = fontData.toString('base64');
+                    
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @font-face {
+                            font-family: "${fontName}";
+                            src: url(data:font/truetype;charset=utf-8;base64,${base64Font}) format("truetype");
+                        }
+                    `;
+                    document.head.appendChild(style);
+                });
+                
+                console.log(`[Overlay] Added ${ttfFiles.length} @font-face rules`);
+                
+                // CRITICAL: Actually load the fonts into memory
+                for (const fontName of fontNames) {
+                    try {
+                        await document.fonts.load(`12px "${fontName}"`);
+                    } catch (err) {
+                        console.warn(`[Overlay] Failed to preload ${fontName}:`, err.message);
+                    }
+                }
+                
+                console.log(`[Overlay] Preloaded ${fontNames.length} fonts into memory`);
+            } catch (error) {
+                console.error('[Overlay] Failed to load fonts:', error);
+            }
+        })();
+    </script>
+    
+    <style>
         * {
             margin: 0;
             padding: 0;

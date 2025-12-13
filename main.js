@@ -190,6 +190,13 @@ function createOverlayWindow() {
     });    overlayWindow.loadFile('overlay.html');
     overlayWindow.setMenu(null);  // Remove "File Edit View" menu but keep title bar buttons
     
+    // Open dev tools with Ctrl+Shift+I
+    overlayWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && input.shift && input.key.toLowerCase() === 'i') {
+            overlayWindow.webContents.toggleDevTools();
+        }
+    });
+    
     overlayWindow.on('closed', () => {
         overlayWindow = null;
     });

@@ -405,13 +405,26 @@ class TextObject {
         };
         
         app.ticker.add(ticker);
-    }    updateSettings(newSettings, silent = false) {
+    }    async updateSettings(newSettings, silent = false) {
         // Check if we're turning off animation
         const disablingAnimation = newSettings.loopAnimation === false && this.settings.loopAnimation === true;
         
         // Handle font changes silently - just update settings and re-render text instantly
         if (newSettings.fontFamily !== undefined && this.settings.fontFamily !== newSettings.fontFamily) {
             this.settings.fontFamily = newSettings.fontFamily;
+            
+            // FORCE LOAD THE FONT BEFORE RENDERING
+            try {
+                await document.fonts.load(`${this.settings.fontSize}px "${newSettings.fontFamily}"`);
+                await document.fonts.load(`12px "${newSettings.fontFamily}"`);
+                await document.fonts.load(`48px "${newSettings.fontFamily}"`);
+                await document.fonts.load(`72px "${newSettings.fontFamily}"`);
+            } catch (err) {
+                console.error(`[Overlay] Failed to load font ${newSettings.fontFamily}:`, err);
+            }
+            
+            // Wait a bit to ensure PixiJS can access it
+            await new Promise(resolve => setTimeout(resolve, 100));
             
             // Re-render text instantly with new font (no animation)
             if (this.lastText.trim()) {
@@ -895,33 +908,88 @@ window.addEventListener('resize', () => {
 // Load custom font
 ipcRenderer.on('load-custom-font', async (event, { fontFamily, fontPath }) => {
     try {
+        // Read font file as base64
+        const fs = require('fs');
+        const fontData = fs.readFileSync(fontPath);
+        const base64Font = fontData.toString('base64');
+        
         const style = document.createElement('style');
         style.textContent = `
             @font-face {
                 font-family: "${fontFamily}";
-                src: url("file://${fontPath.replace(/\\/g, '/')}");
+                src: url(data:font/truetype;charset=utf-8;base64,${base64Font}) format("truetype");
             }
         `;
         document.head.appendChild(style);
         
+        // Load at multiple sizes like Google Fonts
         await document.fonts.load(`12px "${fontFamily}"`);
+        await document.fonts.load(`24px "${fontFamily}"`);
+        await document.fonts.load(`48px "${fontFamily}"`);
+        await document.fonts.load(`72px "${fontFamily}"`);
+        
+        // Extra delay to ensure PixiJS can access it
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Force re-render all text objects after font loads
+        setTimeout(() => {
+            textObjects.forEach(textObj => {
+                if (textObj.lastText.trim()) {
+                    textObj.setTextInstant(textObj.lastText);
+                }
+            });
+        }, 100);
+        
     } catch (error) {
-        // Silent fail
+        console.error(`[Overlay] Failed to load custom font ${fontFamily}:`, error);
     }
 });
 
 // Load Google Font
-ipcRenderer.on('load-google-font', async (event, { fontFamily }) => {
+ipcRenderer.on('load-google-font', async (event, { fontFamily, fontFileName, fontPath }) => {
     try {
-        const fontName = fontFamily.replace(/ /g, '+');
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;700&display=swap`;
-        document.head.appendChild(link);
+        const fs = require('fs');
+        const style = document.createElement('style');
         
+        // If fontPath is provided (local fonts), read as base64
+        if (fontPath) {
+            const fontData = fs.readFileSync(fontPath);
+            const base64Font = fontData.toString('base64');
+            
+            style.textContent = `
+                @font-face {
+                    font-family: "${fontFamily}";
+                    src: url(data:font/truetype;charset=utf-8;base64,${base64Font}) format("truetype");
+                }
+            `;
+        } else {
+            // This fallback shouldn't be hit anymore
+            console.warn('[Overlay] load-google-font called without fontPath');
+            return;
+        }
+        
+        document.head.appendChild(style);        // Wait for font to load in DOM
         await document.fonts.load(`12px "${fontFamily}"`);
+        
+        // CRITICAL: Force font to load at multiple sizes for PixiJS
+        await document.fonts.load(`24px "${fontFamily}"`);
+        await document.fonts.load(`48px "${fontFamily}"`);
+        await document.fonts.load(`72px "${fontFamily}"`);
+        
+        // Extra delay to ensure PixiJS can access it
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Force re-render all text objects after font loads
+        setTimeout(() => {
+            textObjects.forEach(textObj => {
+                if (textObj.lastText.trim()) {
+                    textObj.setTextInstant(textObj.lastText);
+                }
+            });
+        }, 100);
+        
     } catch (error) {
-        // Silent fail
+        console.error(`[Overlay] Failed to load font ${fontFamily}:`, error);
     }
 });
 

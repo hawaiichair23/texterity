@@ -67,19 +67,16 @@ const GOOGLE_FONTS = [
     'Source Code Pro', 'Ubuntu', 'Noto Sans', 'Josefin Sans', 'Libre Baskerville',
     'Maitree', 'Nanum Gothic', 'Cabin', 'Quattrocento', 'Teko',
     'Zilla Slab', 'Domine', 'Inconsolata', 'Karla', 'PT Serif',
-    'Raleway', 'Varela Round', 'Bangers', 'DM Serif Text', 'Lobster Two',
-    'Andada Pro', 'DM Sans', 'Pirata One', 'Caudex', 'Press Start 2P',
+    'Raleway', 'Varela Round', 'Bangers', 'DM Serif Text', 'Lobster Two',    'Andada Pro', 'DM Sans', 'Pirata One', 'Caudex', 'Press Start 2P',
     'Grenze Gotisch', 'MedievalSharp', 'Germania One', 'Jersey 10', 'Jacquard 12',
-    'Jacquard 24', 'Jacquarda Bastarda 9', 'Montserrat', 'Nunito', 'Nova Cut',
-    'Texturina', 'Bungee', 'UnifrakturCook', 'UnifrakturMaguntia', 'Eczar',
+    'Jacquard 24', 'Jacquarda Bastarda 9', 'Montserrat', 'Nunito', 'Nova Cut',    'Texturina', 'UnifrakturMaguntia', 'Eczar',
     'Libre Franklin', 'Fira Sans', 'Syne', 'Tangerine', 'Averia Serif Libre',
     'Sedgwick Ave Display', 'Average', 'Black Han Sans', 'Khand', 'Lusitana',
     'Lalezar', 'Lato', 'Boogaloo', 'Akshar', 'Alegreya',
-    'Aleo', 'Muli', 'Arapey', 'Asap Condensed', 'Assistant',
-    'Barlow', 'Oswald', 'Poppins', 'Brawler', 'Source Sans 3',
+    'Aleo', 'Muli', 'Arapey', 'Asap Condensed', 'Assistant',    'Barlow', 'Oswald', 'Poppins', 'Brawler', 'Source Sans 3',
     'Frank Ruhl Libre', 'Spectral', 'Gelasio', 'Headland One', 'Lora',
     'Enriqueta', 'Caladea', 'Rokkitt', 'Carme', 'Encode Sans Semi Condensed',
-    'Anke Devanagari', 'Leckerli One', 'Belanosima', 'Nata Sans', 'Playfair Display',
+    'Leckerli One', 'Belanosima', 'Nata Sans', 'Playfair Display',
     'Rubik'
 ];
 
@@ -96,6 +93,137 @@ const SYSTEM_FONTS = [
 
 // Track which Google Fonts have been loaded
 const loadedGoogleFonts = new Set();
+
+// Load all fonts from fonts/ directory
+function loadLocalFontsFromDirectory() {
+    const fs = require('fs');
+    const path = require('path');
+
+    const fontsDir = path.join(__dirname, 'fonts');
+
+    // Weight keywords to strip from font names
+    const weightKeywords = ['Thin', 'ExtraLight', 'Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black', 'Heavy', 'Hairline', 'Ultra'];
+
+    function stripWeightFromFontName(fontName) {
+        let cleanName = fontName;
+        // Remove weight keywords from the end of the font name
+        weightKeywords.forEach(weight => {
+            const regex = new RegExp(`\\s+${weight}$`, 'i');
+            cleanName = cleanName.replace(regex, '').trim();
+        });
+        return cleanName;
+    }
+
+    try {
+        const files = fs.readdirSync(fontsDir);
+        const ttfFiles = files.filter(f => f.endsWith('.ttf'));
+        
+        console.log(`[Fonts] Found ${ttfFiles.length} TTF fonts in fonts/ directory`);
+        
+        // Try to require opentype.js - it might not be available in renderer
+        let opentype;
+        try {
+            opentype = require('opentype.js');
+            console.log('[Fonts] opentype.js loaded successfully');
+        } catch (opentypeError) {
+            console.warn('[Fonts] opentype.js not available in renderer, using IPC to main process');
+        }
+        
+        ttfFiles.forEach(file => {
+            const fontPath = path.join(fontsDir, file);
+            
+            if (opentype) {
+                try {
+                    // Parse the font to get the REAL font family name
+                    const font = opentype.loadSync(fontPath);
+                    let fontName = font.names.fontFamily.en || font.names.fullName.en || file.replace('.ttf', '').replace(/-/g, ' ');
+                    
+                    // Strip weight keywords
+                    const cleanFontName = stripWeightFromFontName(fontName);
+                       
+                    // Add to Google Fonts list so it appears in dropdown (using clean name)
+                    if (!GOOGLE_FONTS.includes(cleanFontName)) {
+                        GOOGLE_FONTS.push(cleanFontName);
+                    }
+                    
+                    // Load font with @font-face using the CLEAN name
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @font-face {
+                            font-family: "${cleanFontName}";
+                            src: url("file://${fontPath.replace(/\\/g, '/')}");
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    // Mark as loaded
+                    loadedGoogleFonts.add(cleanFontName);
+                    
+                    // Send to overlay too with clean name
+                    ipcRenderer.send('load-google-font', { 
+                        fontFamily: cleanFontName, 
+                        fontFileName: file.replace('.ttf', ''),
+                        fontPath: fontPath
+                    });
+                } catch (fontError) {
+                    console.error(`[Fonts] Failed to parse ${file}:`, fontError.message);
+                    // Fallback to filename
+                    let fontName = file.replace('.ttf', '').replace(/-/g, ' ');
+                    const cleanFontName = stripWeightFromFontName(fontName);
+                    console.warn(`[Fonts] Using fallback name for ${file}: "${cleanFontName}"`);
+                    
+                    if (!GOOGLE_FONTS.includes(cleanFontName)) {
+                        GOOGLE_FONTS.push(cleanFontName);
+                    }
+                    
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @font-face {
+                            font-family: "${cleanFontName}";
+                            src: url("file://${fontPath.replace(/\\/g, '/')}");
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    loadedGoogleFonts.add(cleanFontName);
+                    
+                    ipcRenderer.send('load-google-font', { 
+                        fontFamily: cleanFontName, 
+                        fontFileName: file.replace('.ttf', ''),
+                        fontPath: fontPath
+                    });
+                }
+            } else {
+                // opentype.js not available - use filename (old behavior)
+                let fontName = file.replace('.ttf', '').replace(/-/g, ' ');
+                const cleanFontName = stripWeightFromFontName(fontName);
+                console.log(`[Fonts] Loading without parsing: "${cleanFontName}" (from ${file})`);
+                
+                if (!GOOGLE_FONTS.includes(cleanFontName)) {
+                    GOOGLE_FONTS.push(cleanFontName);
+                }
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    @font-face {
+                        font-family: "${cleanFontName}";
+                        src: url("file://${fontPath.replace(/\\/g, '/')}");
+                    }
+                `;
+                document.head.appendChild(style);
+                loadedGoogleFonts.add(cleanFontName);
+                
+                ipcRenderer.send('load-google-font', { 
+                    fontFamily: cleanFontName, 
+                    fontFileName: file.replace('.ttf', ''),
+                    fontPath: fontPath
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('[Fonts] Failed to load local fonts:', error);
+    }
+}
 
 // Undo/Redo system for position changes
 let positionHistory = [];
@@ -1333,7 +1461,7 @@ function renderAnimationPreset(preset) {
     presetDiv.className = 'text-object';
     presetDiv.id = `animation-preset-${preset.id}`;
     
-    presetDiv.innerHTML = `        <div class="text-object-header" onclick="toggleAnimationCollapse('${preset.id}')">
+    presetDiv.innerHTML = `<div class="text-object-header" onclick="toggleAnimationCollapse('${preset.id}')">
             <span class="collapse-arrow"></span>
             <input type="text" class="text-object-name" value="${preset.name}" 
                    onchange="updateAnimationName('${preset.id}', this.value)"
@@ -2004,7 +2132,7 @@ ipcRenderer.on('center-position-calculated', (event, { id, x, y }) => {
     }
 });
 
-function updateFont(id, fontFamily) {
+async function updateFont(id, fontFamily) {
     const obj = textObjects.find(o => o.id === id);
     if (obj) {
         obj.fontFamily = fontFamily;
@@ -2016,9 +2144,9 @@ function updateFont(id, fontFamily) {
             value: fontUsageCount
         });
         
-        // Load Google Font if needed
+        // Load Google Font if needed and WAIT for it to finish
         if (GOOGLE_FONTS.includes(fontFamily) && !loadedGoogleFonts.has(fontFamily)) {
-            loadGoogleFont(fontFamily);
+            await loadGoogleFont(fontFamily);
         }
         
         // Font changes should be silent - don't re-trigger animation
@@ -2031,18 +2159,31 @@ async function loadGoogleFont(fontFamily) {
     if (loadedGoogleFonts.has(fontFamily)) return;
     
     try {
-        const fontName = fontFamily.replace(/ /g, '+');
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;700&display=swap`;
-        document.head.appendChild(link);
+        // Load from local fonts folder - try multiple formats
+        const fontFileName = fontFamily.replace(/ /g, '-');
         
-        await document.fonts.load(`12px "${fontFamily}"`);
+        const style = document.createElement('style');
+        style.textContent = `
+            @font-face {
+                font-family: "${fontFamily}";
+                src: url("fonts/${fontFileName}.woff2") format("woff2"),
+                     url("fonts/${fontFileName}.woff") format("woff"),
+                     url("fonts/${fontFileName}.ttf") format("truetype"),
+                     url("fonts/${fontFileName}.otf") format("opentype");
+                font-weight: 400 700;
+                font-display: swap;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Wait for font to actually load        await document.fonts.load(`12px "${fontFamily}"`);
+        
         loadedGoogleFonts.add(fontFamily);
         
-        ipcRenderer.send('load-google-font', { fontFamily });
+        // Don't send to overlay - fonts already loaded at startup via IPC (lines 152-206)
+        // ipcRenderer.send('load-google-font', { fontFamily, fontFileName });
     } catch (error) {
-        // Silent fail
+        console.error(`Failed to load font ${fontFamily}:`, error);
     }
 }
 
@@ -2259,22 +2400,22 @@ function renderFontList(id, filter = '') {
         .map(([font]) => font)
         .filter(font => !filter || font.toLowerCase().includes(filterLower));
     
-    // Filter system fonts
-    const systemFiltered = SYSTEM_FONTS.filter(font => 
-        !filter || font.toLowerCase().includes(filterLower)
-    );
+    // Filter and SORT system fonts alphabetically
+    const systemFiltered = SYSTEM_FONTS
+        .filter(font => !filter || font.toLowerCase().includes(filterLower))
+        .sort((a, b) => a.localeCompare(b));
     
-    // Filter Google fonts
-    const googleFiltered = GOOGLE_FONTS.filter(font => 
-        !filter || font.toLowerCase().includes(filterLower)
-    );
+    // Filter and SORT Google fonts alphabetically
+    const googleFiltered = GOOGLE_FONTS
+        .filter(font => !filter || font.toLowerCase().includes(filterLower))
+        .sort((a, b) => a.localeCompare(b));
     
-    // Filter custom fonts
-    const customFiltered = customFonts.filter(font => 
-        !filter || font.family.toLowerCase().includes(filterLower)
-    );
+    // Filter and SORT custom fonts alphabetically
+    const customFiltered = customFonts
+        .filter(font => !filter || font.family.toLowerCase().includes(filterLower))
+        .sort((a, b) => a.family.localeCompare(b.family));
     
-    // Recent section
+    // Recent section (don't sort - keep by usage)
     if (recentFonts.length > 0 && !filter) {
         html += '<div class="font-section-header">⭐ Recent</div>';
         recentFonts.forEach(font => {
@@ -2607,6 +2748,9 @@ ipcRenderer.on('text-object-focused', (event, id) => {
 window.addEventListener('DOMContentLoaded', () => {
     // Load API keys from keychain
     ipcRenderer.send('get-all-api-keys');
+    
+    // LOAD ALL LOCAL FONTS FROM fonts/ DIRECTORY
+    loadLocalFontsFromDirectory();
     
     // Settings will be automatically sent via did-finish-load event in main.js    // Create default animation preset first
     createAnimationPreset();

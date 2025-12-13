@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Fredericka the Great';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Fredericka-the-Great.ttf') format('truetype');
+}

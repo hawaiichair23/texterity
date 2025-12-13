@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Jacquard 24';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Jacquard-24.ttf') format('truetype');
+}
