@@ -1102,11 +1102,24 @@ function createScriptAPI(scriptId) {
     // Clear all triangles (for animation frames)
     api.clearTriangles = function() {
         ipcRenderer.send('clear-triangles');
-    };
-    
-    // Batch draw multiple triangles (better for animation)
+    };    // Batch draw multiple triangles (better for animation)
     api.drawTriangles = function(triangles) {
         ipcRenderer.send('draw-triangles-batch', { triangles });
+    };    // Start an animation loop that runs in sync with PixiJS rendering
+    api.startAnimation = function(callback) {
+        // Get the full script code (includes variables in scope)
+        const script = scripts.find(s => s.id === scriptId);
+        if (script) {
+            ipcRenderer.send('start-animation', {
+                scriptId: scriptId,
+                code: script.code  // Send full script code, not just callback
+            });
+        }
+    };
+    
+    // Stop animation loop
+    api.stopAnimation = function() {
+        ipcRenderer.send('stop-animation', { scriptId: scriptId });
     };
     // 3D Math Helpers
     api.rotateX = function(x, y, z, angle) {
@@ -1192,6 +1205,8 @@ function runScript(id) {
             'drawTriangle',
             'clearTriangles',
             'drawTriangles',
+            'startAnimation',
+            'stopAnimation',
             'rotateX',
             'rotateY',
             'rotateZ',
@@ -1214,6 +1229,8 @@ function runScript(id) {
             api.drawTriangle,
             api.clearTriangles,
             api.drawTriangles,
+            api.startAnimation,
+            api.stopAnimation,
             api.rotateX,
             api.rotateY,
             api.rotateZ,
@@ -1262,6 +1279,9 @@ function stopScript(id) {
     
     // Clear all triangles when script stops
     ipcRenderer.send('clear-triangles');
+    
+    // Stop any running animations
+    ipcRenderer.send('stop-animation', { scriptId: id });
     
     // Remove from running scripts
     runningScripts.delete(id);

@@ -3,10 +3,14 @@ const { ipcRenderer } = require('electron');
 
 let app;
 let backgroundRect;
-let trianglesGraphics; // Global Graphics object for ALL standalone triangles
+let scriptGraphicsMap = new Map(); // Map of scriptId -> Graphics object for per-script rendering
+let scriptHitboxMap = new Map(); // Map of scriptId -> hitbox Graphics for interaction
+let scriptHoverBoxMap = new Map(); // Map of scriptId -> hover box Graphics for visual feedback
+let scriptPositionOffsets = new Map(); // Map of scriptId -> {x, y} position offsets for dragging
 let textObjects = new Map(); // Store multiple text objects by ID
 let globalLoopTimer = null; // Single global loop timer for all objects
 let clickThroughEnabled = false; // Track click-through mode state
+let animationCallbacks = new Map(); // Store animation callbacks by scriptId
 
 // Color pool for unique pastel colors
 let usedColors = new Set();
@@ -79,8 +83,7 @@ class TextObject {
         }
         
         this.setupDragging();
-        this.setupHover();
-    }    getRandomPastelColor() {
+        this.setupHover();    }    getRandomPastelColor() {
         // Get available colors (not yet used)
         const availableColors = pastelColors.filter(color => !usedColors.has(color));
         
@@ -88,13 +91,13 @@ class TextObject {
         if (availableColors.length === 0) {
             usedColors.clear();
             availableColors.push(...pastelColors);
-        }
-        
-        // Pick random from available
+        }        // Pick random from available
         const color = availableColors[Math.floor(Math.random() * availableColors.length)];
         usedColors.add(color);
         return color;
-    }    setupHover() {
+    }
+
+    setupHover() {
         // Use hitBox for hover detection instead of container
         this.hitBox.on('pointerover', () => {
             if (this.container.children.length > 0) {
@@ -323,9 +326,7 @@ class TextObject {
                 char.alpha = 0;
                 const delay = (totalChars + charIndex) * this.settings.charDelayStep * 1000;
                 const hopUp = this.settings.hopMax + (Math.random() * this.settings.hopVariation);
-                const hopDown = this.settings.hopMin;
-                
-                this.animatingChars++; // Track total characters to animate
+                const hopDown = this.settings.hopMin;                this.animatingChars++; // Track total characters to animate
                 
                 setTimeout(() => {
                     this.animateCharacter(char, hopUp, hopDown, () => {
@@ -688,8 +689,7 @@ class TextObject {
         usedColors.delete(this.pastelColor);
         app.stage.removeChild(this.container);
         app.stage.removeChild(this.hoverBox);
-        app.stage.removeChild(this.hitBox);
-    }
+        app.stage.removeChild(this.hitBox);    }
 }
 
 // Notify control window when overlay visibility changes
@@ -759,13 +759,7 @@ async function initPixi() {
     
     document.getElementById('pixi-container').appendChild(app.canvas);    backgroundRect = new PIXI.Graphics();
     backgroundRect.zIndex = -1;
-    app.stage.addChild(backgroundRect);
-    
-    // Initialize triangles graphics layer (above background, below text)
-    trianglesGraphics = new PIXI.Graphics();
-    trianglesGraphics.zIndex = -0.5; // Between background (-1) and text (0)
-    app.stage.addChild(trianglesGraphics);
-    
+    app.stage.addChild(backgroundRect);    
     drawBackground(globalSettings.backgroundColor);    app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.sortableChildren = true;
@@ -1090,6 +1084,241 @@ ipcRenderer.on('unfocus-all-text-objects', () => {
 // Listen for click-through mode changes
 ipcRenderer.on('click-through-mode-changed', (event, enabled) => {
     clickThroughEnabled = enabled;
+});
+
+// Animation system - runs in sync with PixiJS ticker
+ipcRenderer.on('start-animation', (event, data) => {
+    const { scriptId, code } = data;
+    
+    try {
+        // Create animation context with helper functions
+        const animationContext = {
+            rotateX: (x, y, z, angle) => {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return { x: x, y: y * cos - z * sin, z: y * sin + z * cos };
+            },
+            rotateY: (x, y, z, angle) => {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return { x: x * cos + z * sin, y: y, z: -x * sin + z * cos };
+            },
+            rotateZ: (x, y, z, angle) => {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return { x: x * cos - y * sin, y: x * sin + y * cos, z: z };
+            },            project3D: (x, y, z, distance = 500) => {
+                const scale = distance / (distance + z);
+                return { x: x * scale + 640, y: y * scale + 360 };
+            },
+            drawTriangles: (triangles) => {
+                // Get this script's graphics object
+                let graphics = scriptGraphicsMap.get(scriptId);
+                
+                // If it doesn't exist yet, create it
+                if (!graphics) {
+                    graphics = new PIXI.Graphics();
+                    graphics.zIndex = -0.5; // Between background (-1) and text (0)
+                    app.stage.addChild(graphics);
+                    scriptGraphicsMap.set(scriptId, graphics);
+                }
+                
+                // Get or create hitbox and hover box
+                let hitBox = scriptHitboxMap.get(scriptId);
+                let hoverBox = scriptHoverBoxMap.get(scriptId);
+                
+                if (!hitBox) {
+                    // Create invisible hitbox for interaction
+                    hitBox = new PIXI.Graphics();
+                    hitBox.eventMode = 'static';
+                    hitBox.cursor = 'pointer';                    hitBox.zIndex = 1;
+                    app.stage.addChild(hitBox);
+                    scriptHitboxMap.set(scriptId, hitBox);
+                    
+                    // Create hover box for visual feedback
+                    hoverBox = new PIXI.Graphics();
+                    hoverBox.zIndex = 1;
+                    hoverBox.visible = false;
+                    app.stage.addChild(hoverBox);
+                    scriptHoverBoxMap.set(scriptId, hoverBox);
+                    
+                    // Setup drag and hover handlers
+                    let isDragging = false;
+                    let dragOffset = { x: 0, y: 0 };
+                    
+                    hitBox.on('pointerover', () => {
+                        hoverBox.visible = true;
+                        // Always disable click-through when hovering (allows dragging)
+                        ipcRenderer.send('set-click-through-temporarily', false);
+                    });
+                    
+                    hitBox.on('pointerout', () => {
+                        if (!isDragging) {
+                            hoverBox.visible = false;
+                        }
+                        // Re-enable click-through when leaving (if click-through mode is on)
+                        if (!isDragging) {
+                            ipcRenderer.send('restore-click-through-state');
+                        }
+                    });
+                    
+                    hitBox.on('pointerdown', (event) => {
+                        isDragging = true;
+                        const position = event.data.global;
+                        const bounds = graphics.getBounds();
+                        dragOffset.x = position.x - bounds.x;
+                        dragOffset.y = position.y - bounds.y;
+                        
+                        app.stage.on('pointermove', onDragMove);
+                    });
+                    
+                    const onDragMove = (event) => {
+                        if (isDragging) {
+                            const position = event.data.global;
+                            const bounds = graphics.getBounds();
+                            
+                            const newX = position.x - dragOffset.x;
+                            const newY = position.y - dragOffset.y;
+                            const deltaX = newX - bounds.x;
+                            const deltaY = newY - bounds.y;
+                            
+                            // Store the offset for this script
+                            let offset = scriptPositionOffsets.get(scriptId) || { x: 0, y: 0 };
+                            offset.x += deltaX;
+                            offset.y += deltaY;
+                            scriptPositionOffsets.set(scriptId, offset);
+                        }
+                    };
+                    
+                    const onDragEnd = () => {
+                        if (isDragging) {
+                            app.stage.off('pointermove', onDragMove);
+                            isDragging = false;
+                            hoverBox.visible = false;
+                        }
+                    };
+                    
+                    app.stage.on('pointerup', onDragEnd);
+                    app.stage.on('pointerupoutside', onDragEnd);
+                }
+                
+                // Apply position offset before drawing
+                const offset = scriptPositionOffsets.get(scriptId) || { x: 0, y: 0 };
+                
+                graphics.clear();
+                
+                // Track bounds for hitbox
+                let minX = Infinity, minY = Infinity;
+                let maxX = -Infinity, maxY = -Infinity;
+                
+                triangles.forEach(tri => {
+                    // Apply offset to triangle coordinates
+                    const x1 = tri.x1 + offset.x;
+                    const y1 = tri.y1 + offset.y;
+                    const x2 = tri.x2 + offset.x;
+                    const y2 = tri.y2 + offset.y;
+                    const x3 = tri.x3 + offset.x;
+                    const y3 = tri.y3 + offset.y;
+                    
+                    graphics.poly([x1, y1, x2, y2, x3, y3]);
+                    
+                    // Support both plain color and {color, alpha} object
+                    if (typeof tri.color === 'object' && tri.color.color !== undefined) {
+                        graphics.fill({ color: tri.color.color, alpha: tri.color.alpha });
+                    } else if (tri.alpha !== undefined) {
+                        graphics.fill({ color: tri.color, alpha: tri.alpha });
+                    } else {
+                        graphics.fill(tri.color);
+                    }                    // Track bounds
+                    minX = Math.min(minX, x1, x2, x3);
+                    minY = Math.min(minY, y1, y2, y3);
+                    maxX = Math.max(maxX, x1, x2, x3);
+                    maxY = Math.max(maxY, y1, y2, y3);
+                });
+                
+                // Update hitbox and hover box
+                const padding = 10;
+                hitBox.clear();
+                hitBox.rect(minX - padding, minY - padding, (maxX - minX) + padding * 2, (maxY - minY) + padding * 2);
+                hitBox.fill({ color: 0x000000, alpha: 0.01 }); // Nearly invisible but interactive
+                
+                hoverBox.clear();
+                hoverBox.rect(minX - padding, minY - padding, (maxX - minX) + padding * 2, (maxY - minY) + padding * 2);
+                hoverBox.stroke({ width: 1, color: 0x00FFFF }); // Cyan border
+            },
+            animationCallback: null  // Will be set by startAnimation call
+        };
+        
+        // Execute the script with animation context
+        const scriptFunc = new Function(
+            'rotateX', 'rotateY', 'rotateZ', 'project3D', 'drawTriangles', 'startAnimation',
+            code
+        );
+        
+        // Provide startAnimation function that captures the callback
+        const startAnimationFunc = (callback) => {
+            animationContext.animationCallback = callback;
+        };
+        
+        // Execute script to set up variables and capture animation callback
+        scriptFunc(
+            animationContext.rotateX,
+            animationContext.rotateY,
+            animationContext.rotateZ,
+            animationContext.project3D,
+            animationContext.drawTriangles,
+            startAnimationFunc
+        );
+        
+        // Now add the captured callback to ticker
+        if (animationContext.animationCallback) {
+            // Stop existing animation for this script if any
+            if (animationCallbacks.has(scriptId)) {
+                app.ticker.remove(animationCallbacks.get(scriptId));
+            }
+            
+            // Add to PixiJS ticker
+            animationCallbacks.set(scriptId, animationContext.animationCallback);
+            app.ticker.add(animationContext.animationCallback);
+        }
+        
+    } catch (error) {
+        console.error('Error starting animation:', error);
+    }
+});
+
+ipcRenderer.on('stop-animation', (event, data) => {
+    const { scriptId } = data;
+    
+    if (animationCallbacks.has(scriptId)) {
+        app.ticker.remove(animationCallbacks.get(scriptId));
+        animationCallbacks.delete(scriptId);
+    }
+    
+    // Clean up this script's graphics object
+    if (scriptGraphicsMap.has(scriptId)) {
+        const graphics = scriptGraphicsMap.get(scriptId);
+        app.stage.removeChild(graphics);
+        graphics.destroy();
+        scriptGraphicsMap.delete(scriptId);
+    }
+    
+    // Clean up hitbox
+    if (scriptHitboxMap.has(scriptId)) {
+        const hitBox = scriptHitboxMap.get(scriptId);
+        app.stage.removeChild(hitBox);
+        hitBox.destroy();
+        scriptHitboxMap.delete(scriptId);
+    }
+    
+    // Clean up hover box
+    if (scriptHoverBoxMap.has(scriptId)) {
+        const hoverBox = scriptHoverBoxMap.get(scriptId);
+        app.stage.removeChild(hoverBox);
+        hoverBox.destroy();
+        scriptHoverBoxMap.delete(scriptId);
+    }    // Clean up position offset
+    scriptPositionOffsets.delete(scriptId);
 });
 
 // Initialize

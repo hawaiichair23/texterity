@@ -2,14 +2,14 @@
   "version": "1.0",
   "textObjects": [
     {
-      "id": 1,
-      "name": "Text Object 1",
+      "id": 2,
+      "name": "Text Object 2",
       "inputMode": "manual",
-      "text": "Love all, trust a few, do wrong to none.",
+      "text": "All for one, and one for all.",
       "filePath": null,
-      "positionX": 640,
-      "positionY": 346,
-      "fontSize": 33,
+      "positionX": 996,
+      "positionY": 635,
+      "fontSize": 48,
       "fontFamily": "Instrument Serif",
       "color": 16777215,
       "loopAnimation": true,
@@ -17,44 +17,6 @@
       "outlineColor": 0,
       "outlineWidth": 4,
       "animationPreset": "animation-1",
-      "collapsed": false
-    },
-    {
-      "id": 2,
-      "name": "Wave Text",
-      "inputMode": "manual",
-      "text": "HELLO",
-      "filePath": null,
-      "positionX": 1053,
-      "positionY": 168,
-      "fontSize": 60,
-      "fontFamily": "Instrument Serif",
-      "color": 16777215,
-      "loopAnimation": false,
-      "outlineEnabled": true,
-      "outlineColor": 0,
-      "outlineWidth": 4,
-      "animationPreset": null,
-      "createdByScript": 1,
-      "collapsed": false
-    },
-    {
-      "id": 3,
-      "name": "Text Object 3",
-      "inputMode": "manual",
-      "text": "DEOXYRIBONUCLEICACID",
-      "filePath": null,
-      "positionX": 966,
-      "positionY": 582,
-      "fontSize": 52,
-      "fontFamily": "Instrument Serif",
-      "color": 16711935,
-      "loopAnimation": false,
-      "outlineEnabled": true,
-      "outlineColor": 0,
-      "outlineWidth": 4,
-      "animationPreset": null,
-      "createdByScript": 2,
       "collapsed": false
     }
   ],
@@ -78,25 +40,25 @@
     {
       "id": 1,
       "name": "Script 1",
-      "code": "// Wave effect example\nconst myText = createTextObject({\n  name: \"Wave Text\",\n  text: \"HELLO\",\n  x: 640,\n  y: 360,\n  fontSize: 60,\n  color: 0xFFFFFF\n});\n\nwaveEffect(myText);",
+      "code": "\nconst vertices = [\n    [-100, -100, -100], [100, -100, -100], [100, 100, -100], [-100, 100, -100],\n    [-100, -100, 100],  [100, -100, 100],  [100, 100, 100],  [-100, 100, 100]\n];\n\nlet angle = 0;\n\nstartAnimation(function() {\n    const projected = vertices.map(v => {\n        let rotated = rotateY(v[0], v[1], v[2], angle);\n        rotated = rotateX(rotated.x, rotated.y, rotated.z, angle * 0.5);\n        return project3D(rotated.x, rotated.y, rotated.z);\n    });\n    \n    const triangles = [\n        // Front face - bright red\n        {x1: projected[4].x, y1: projected[4].y, x2: projected[5].x, y2: projected[5].y, x3: projected[6].x, y3: projected[6].y, color: 0xFF0000},\n        {x1: projected[4].x, y1: projected[4].y, x2: projected[6].x, y2: projected[6].y, x3: projected[7].x, y3: projected[7].y, color: 0xFF0000},\n        \n        // Back face - dark red\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[1].x, y2: projected[1].y, x3: projected[2].x, y3: projected[2].y, color: 0x880000},\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[2].x, y2: projected[2].y, x3: projected[3].x, y3: projected[3].y, color: 0x880000},\n        \n        // Right face - orange\n        {x1: projected[1].x, y1: projected[1].y, x2: projected[5].x, y2: projected[5].y, x3: projected[6].x, y3: projected[6].y, color: 0xFF8800},\n        {x1: projected[1].x, y1: projected[1].y, x2: projected[6].x, y2: projected[6].y, x3: projected[2].x, y3: projected[2].y, color: 0xFF8800},\n        \n        // Left face - brown\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[4].x, y2: projected[4].y, x3: projected[7].x, y3: projected[7].y, color: 0xCC6600},\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[7].x, y2: projected[7].y, x3: projected[3].x, y3: projected[3].y, color: 0xCC6600},\n        \n        // Top face - yellow\n        {x1: projected[3].x, y1: projected[3].y, x2: projected[2].x, y2: projected[2].y, x3: projected[6].x, y3: projected[6].y, color: 0xFFFF00},\n        {x1: projected[3].x, y1: projected[3].y, x2: projected[6].x, y2: projected[6].y, x3: projected[7].x, y3: projected[7].y, color: 0xFFFF00},\n        \n        // Bottom face - olive\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[1].x, y2: projected[1].y, x3: projected[5].x, y3: projected[5].y, color: 0xCCCC00},\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[5].x, y2: projected[5].y, x3: projected[4].x, y3: projected[4].y, color: 0xCCCC00}\n    ];\n    \n    drawTriangles(triangles);\n    angle += 0.02;\n});\n",
       "collapsed": true,
       "isRunning": true
     },
     {
       "id": 2,
       "name": "Script 2",
-      "code": "const myText = createTextObject({\n  text: \"DEOXYRIBONUCLEICACID\",\n  x: 640,\n  y: 360,\n  fontSize: 52,\n  color: 0xFF00FF\n});\n\nlet time = 0;\nsetInterval(() => {\n  const offsets = [];\n  const textLength = 20;\n  \n  for (let i = 0; i < textLength; i++) {\n    const t = (i / textLength) * Math.PI * 6 + time;\n    \n    // Double helix equations\n    const helix1Y = Math.sin(t) * 30;\n    const helix1Z = Math.cos(t) * 60;\n    \n    // Use Z for depth simulation (scale effect)\n    const x = helix1Z;\n    const y = helix1Y;\n    \n    offsets.push({ x, y });\n  }\n  \n  setCharacterOffsets(myText, offsets);\n  time += 0.08;\n}, 16);",
+      "code": "const pyramidVertices = [\r\n    // Base vertices (square at bottom)\r\n    [-80, 80, -80],   // 0: bottom-left\r\n    [80, 80, -80],    // 1: bottom-right\r\n    [80, 80, 80],     // 2: back-right\r\n    [-80, 80, 80],    // 3: back-left\r\n    // Apex (top point)\r\n    [0, -100, 0]      // 4: tip\r\n];\r\n\r\nlet pyramidAngle = 0;\r\n\r\nstartAnimation(function() {\r\n    const projected = pyramidVertices.map(v => {\r\n        let rotated = rotateY(v[0], v[1], v[2], pyramidAngle);\r\n        rotated = rotateX(rotated.x, rotated.y, rotated.z, pyramidAngle * 0.3);\r\n        // Shift to upper-right: add 400 to x, subtract 200 from y\r\n        return {\r\n            x: project3D(rotated.x, rotated.y, rotated.z).x + 400,\r\n            y: project3D(rotated.x, rotated.y, rotated.z).y - 200\r\n        };\r\n    });\r\n    \r\n    const triangles = [\r\n        // Base (2 triangles forming square bottom)\r\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[1].x, y2: projected[1].y, x3: projected[2].x, y3: projected[2].y, color: 0x4488FF, alpha: 0.5},\r\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[2].x, y2: projected[2].y, x3: projected[3].x, y3: projected[3].y, color: 0x4488FF, alpha: 0.5},\r\n        \r\n        // Front face\r\n        {x1: projected[0].x, y1: projected[0].y, x2: projected[1].x, y2: projected[1].y, x3: projected[4].x, y3: projected[4].y, color: 0x00FFFF, alpha: 0.6},\r\n        \r\n        // Right face\r\n        {x1: projected[1].x, y1: projected[1].y, x2: projected[2].x, y2: projected[2].y, x3: projected[4].x, y3: projected[4].y, color: 0x00FF88, alpha: 0.6},\r\n        \r\n        // Back face\r\n        {x1: projected[2].x, y1: projected[2].y, x2: projected[3].x, y2: projected[3].y, x3: projected[4].x, y3: projected[4].y, color: 0x88FF00, alpha: 0.6},\r\n        \r\n        // Left face\r\n        {x1: projected[3].x, y1: projected[3].y, x2: projected[0].x, y2: projected[0].y, x3: projected[4].x, y3: projected[4].y, color: 0xFFFF00, alpha: 0.6}\r\n    ];\r\n    \r\n    drawTriangles(triangles);\r\n    pyramidAngle += 0.03;\r\n});",
       "collapsed": false,
       "isRunning": true
     }
   ],
   "globalSettings": {
     "backgroundColor": 0,
-    "backgroundTransparent": false,
+    "backgroundTransparent": true,
     "hopMin": 1,
     "hopMax": 3,
     "charDelayStep": 0.023,
     "animationDuration": 0.4
   },
-  "savedAt": "2025-12-09T02:57:43.541Z"
+  "savedAt": "2025-12-13T22:39:48.866Z"
 }

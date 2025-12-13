@@ -454,6 +454,18 @@ ipcMain.on('draw-triangles-batch', (event, data) => {
     }
 });
 
+ipcMain.on('start-animation', (event, data) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('start-animation', data);
+    }
+});
+
+ipcMain.on('stop-animation', (event, data) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('stop-animation', data);
+    }
+});
+
 ipcMain.on('overlay-visibility-changed', (event, isHidden) => {
     if (controlWindow && !controlWindow.isDestroyed()) {
         controlWindow.webContents.send('overlay-visibility-changed', isHidden);
