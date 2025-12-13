@@ -190,6 +190,12 @@ function createOverlayWindow() {
     });    overlayWindow.loadFile('overlay.html');
     overlayWindow.setMenu(null);  // Remove "File Edit View" menu but keep title bar buttons
     
+    // Ensure click-through is disabled on startup
+    overlayWindow.webContents.on('did-finish-load', () => {
+        overlayWindow.setIgnoreMouseEvents(false);
+        overlayWindow.setAlwaysOnTop(false);
+    });
+    
     // Open dev tools with Ctrl+Shift+I
     overlayWindow.webContents.on('before-input-event', (event, input) => {
         if (input.control && input.shift && input.key.toLowerCase() === 'i') {
@@ -251,6 +257,40 @@ ipcMain.on('maximize-overlay', () => {
 ipcMain.on('close-overlay', () => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
         overlayWindow.close();
+    }
+});
+
+// Toggle click-through mode
+let clickThroughEnabled = false; // Track click-through state
+
+ipcMain.on('toggle-click-through', (event, enabled) => {
+    clickThroughEnabled = enabled;
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.setIgnoreMouseEvents(enabled, { forward: true });
+        overlayWindow.setAlwaysOnTop(enabled);
+        // Notify overlay of click-through state change
+        overlayWindow.webContents.send('click-through-mode-changed', enabled);
+    }
+});
+
+// Temporarily disable click-through (when hovering over text)
+ipcMain.on('set-click-through-temporarily', (event, enabled) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.setIgnoreMouseEvents(enabled, { forward: true });
+    }
+});
+
+// Restore click-through state (when leaving text)
+ipcMain.on('restore-click-through-state', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.setIgnoreMouseEvents(clickThroughEnabled, { forward: true });
+    }
+});
+
+// Unfocus all text objects (when entering click-through mode)
+ipcMain.on('unfocus-all-text-objects', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('unfocus-all-text-objects');
     }
 });
 
@@ -393,6 +433,24 @@ ipcMain.on('update-text-object-position', (event, data) => {
 ipcMain.on('update-character-offsets', (event, data) => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
         overlayWindow.webContents.send('update-character-offsets', data);
+    }
+});
+
+ipcMain.on('draw-triangle', (event, data) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('draw-triangle', data);
+    }
+});
+
+ipcMain.on('clear-triangles', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('clear-triangles');
+    }
+});
+
+ipcMain.on('draw-triangles-batch', (event, data) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('draw-triangles-batch', data);
     }
 });
 

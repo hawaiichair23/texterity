@@ -1,3 +1,4 @@
+
 const { ipcRenderer } = require('electron');
 const path = require('path');
 
@@ -60,25 +61,8 @@ let nextObjectId = 1;
 let customFonts = []; // Track custom imported fonts
 let fontUsageCount = {}; // Track font usage for "recent fonts"
 
-// Google Fonts list (your custom selection)
-const GOOGLE_FONTS = [
-    'Crimson Pro', 'Crimson Text', 'Roboto', 'Open Sans', 'Roboto Condensed',
-    'Roboto Slab', 'Nabla', 'Jost', 'Pacifico', 'Inter Tight',
-    'Source Code Pro', 'Ubuntu', 'Noto Sans', 'Josefin Sans', 'Libre Baskerville',
-    'Maitree', 'Nanum Gothic', 'Cabin', 'Quattrocento', 'Teko',
-    'Zilla Slab', 'Domine', 'Inconsolata', 'Karla', 'PT Serif',
-    'Raleway', 'Varela Round', 'Bangers', 'DM Serif Text', 'Lobster Two',    'Andada Pro', 'DM Sans', 'Pirata One', 'Caudex', 'Press Start 2P',
-    'Grenze Gotisch', 'MedievalSharp', 'Germania One', 'Jersey 10', 'Jacquard 12',
-    'Jacquard 24', 'Jacquarda Bastarda 9', 'Montserrat', 'Nunito', 'Nova Cut',    'Texturina', 'UnifrakturMaguntia', 'Eczar',
-    'Libre Franklin', 'Fira Sans', 'Syne', 'Tangerine', 'Averia Serif Libre',
-    'Sedgwick Ave Display', 'Average', 'Black Han Sans', 'Khand', 'Lusitana',
-    'Lalezar', 'Lato', 'Boogaloo', 'Akshar', 'Alegreya',
-    'Aleo', 'Muli', 'Arapey', 'Asap Condensed', 'Assistant',    'Barlow', 'Oswald', 'Poppins', 'Brawler', 'Source Sans 3',
-    'Frank Ruhl Libre', 'Spectral', 'Gelasio', 'Headland One', 'Lora',
-    'Enriqueta', 'Caladea', 'Rokkitt', 'Carme', 'Encode Sans Semi Condensed',
-    'Leckerli One', 'Belanosima', 'Nata Sans', 'Playfair Display',
-    'Rubik'
-];
+// Google Fonts list - populated dynamically from fonts folder
+const GOOGLE_FONTS = [];
 
 // System fonts (pre-installed)
 const SYSTEM_FONTS = [
@@ -94,6 +78,7 @@ const SYSTEM_FONTS = [
 // Track which Google Fonts have been loaded
 const loadedGoogleFonts = new Set();
 
+// Load all fonts from fonts/ directory
 // Load all fonts from fonts/ directory
 function loadLocalFontsFromDirectory() {
     const fs = require('fs');
@@ -117,9 +102,9 @@ function loadLocalFontsFromDirectory() {
     try {
         const files = fs.readdirSync(fontsDir);
         const ttfFiles = files.filter(f => f.endsWith('.ttf'));
-        
+
         console.log(`[Fonts] Found ${ttfFiles.length} TTF fonts in fonts/ directory`);
-        
+
         // Try to require opentype.js - it might not be available in renderer
         let opentype;
         try {
@@ -128,24 +113,24 @@ function loadLocalFontsFromDirectory() {
         } catch (opentypeError) {
             console.warn('[Fonts] opentype.js not available in renderer, using IPC to main process');
         }
-        
+
         ttfFiles.forEach(file => {
             const fontPath = path.join(fontsDir, file);
-            
+
             if (opentype) {
                 try {
                     // Parse the font to get the REAL font family name
                     const font = opentype.loadSync(fontPath);
                     let fontName = font.names.fontFamily.en || font.names.fullName.en || file.replace('.ttf', '').replace(/-/g, ' ');
-                    
+
                     // Strip weight keywords
                     const cleanFontName = stripWeightFromFontName(fontName);
-                       
+
                     // Add to Google Fonts list so it appears in dropdown (using clean name)
                     if (!GOOGLE_FONTS.includes(cleanFontName)) {
                         GOOGLE_FONTS.push(cleanFontName);
                     }
-                    
+
                     // Load font with @font-face using the CLEAN name
                     const style = document.createElement('style');
                     style.textContent = `
@@ -155,13 +140,13 @@ function loadLocalFontsFromDirectory() {
                         }
                     `;
                     document.head.appendChild(style);
-                    
+
                     // Mark as loaded
                     loadedGoogleFonts.add(cleanFontName);
-                    
+
                     // Send to overlay too with clean name
-                    ipcRenderer.send('load-google-font', { 
-                        fontFamily: cleanFontName, 
+                    ipcRenderer.send('load-google-font', {
+                        fontFamily: cleanFontName,
                         fontFileName: file.replace('.ttf', ''),
                         fontPath: fontPath
                     });
@@ -171,11 +156,11 @@ function loadLocalFontsFromDirectory() {
                     let fontName = file.replace('.ttf', '').replace(/-/g, ' ');
                     const cleanFontName = stripWeightFromFontName(fontName);
                     console.warn(`[Fonts] Using fallback name for ${file}: "${cleanFontName}"`);
-                    
+
                     if (!GOOGLE_FONTS.includes(cleanFontName)) {
                         GOOGLE_FONTS.push(cleanFontName);
                     }
-                    
+
                     const style = document.createElement('style');
                     style.textContent = `
                         @font-face {
@@ -185,9 +170,9 @@ function loadLocalFontsFromDirectory() {
                     `;
                     document.head.appendChild(style);
                     loadedGoogleFonts.add(cleanFontName);
-                    
-                    ipcRenderer.send('load-google-font', { 
-                        fontFamily: cleanFontName, 
+
+                    ipcRenderer.send('load-google-font', {
+                        fontFamily: cleanFontName,
                         fontFileName: file.replace('.ttf', ''),
                         fontPath: fontPath
                     });
@@ -197,11 +182,11 @@ function loadLocalFontsFromDirectory() {
                 let fontName = file.replace('.ttf', '').replace(/-/g, ' ');
                 const cleanFontName = stripWeightFromFontName(fontName);
                 console.log(`[Fonts] Loading without parsing: "${cleanFontName}" (from ${file})`);
-                
+
                 if (!GOOGLE_FONTS.includes(cleanFontName)) {
                     GOOGLE_FONTS.push(cleanFontName);
                 }
-                
+
                 const style = document.createElement('style');
                 style.textContent = `
                     @font-face {
@@ -211,15 +196,15 @@ function loadLocalFontsFromDirectory() {
                 `;
                 document.head.appendChild(style);
                 loadedGoogleFonts.add(cleanFontName);
-                
-                ipcRenderer.send('load-google-font', { 
-                    fontFamily: cleanFontName, 
+
+                ipcRenderer.send('load-google-font', {
+                    fontFamily: cleanFontName,
                     fontFileName: file.replace('.ttf', ''),
                     fontPath: fontPath
                 });
             }
         });
-        
+
     } catch (error) {
         console.error('[Fonts] Failed to load local fonts:', error);
     }
@@ -998,10 +983,171 @@ function createScriptAPI(scriptId) {
                 });
             }
             api.setCharacterOffsets(id, offsets);
-        }, 50);
+        }, 50);        return intervalId;
+    };
+    
+    // Fade out text (smooth opacity transition)
+    api.fadeOut = function(id, duration = 1000) {
+        const textObject = textObjects.find(obj => obj.id === id);
+        if (!textObject) {
+            logScriptMessage(scriptId, `Text object ${id} not found`, 'error');
+            return null;
+        }
         
-        return intervalId;
-    };    return api;
+        const steps = 60; // 60 frames for smooth animation
+        const interval = duration / steps;
+        let currentStep = 0;
+        
+        const fadeInterval = api.setInterval(() => {
+            currentStep++;
+            const opacity = 1 - (currentStep / steps);
+            
+            // Fade each character
+            const colors = [];
+            const textLength = textObject.text.length;
+            const baseColor = textObject.color;
+            
+            for (let i = 0; i < textLength; i++) {
+                // Convert hex to RGB, apply opacity, convert back
+                const r = (baseColor >> 16) & 0xFF;
+                const g = (baseColor >> 8) & 0xFF;
+                const b = baseColor & 0xFF;
+                
+                // Lerp towards background (0x000000 for now)
+                const newR = Math.floor(r * opacity);
+                const newG = Math.floor(g * opacity);
+                const newB = Math.floor(b * opacity);
+                
+                colors.push((newR << 16) | (newG << 8) | newB);
+            }
+            
+            api.setCharacterColors(id, colors);
+            
+            if (currentStep >= steps) {
+                clearInterval(fadeInterval);
+            }
+        }, interval);
+        
+        return fadeInterval;
+    };
+    
+    // Fade in text (smooth opacity transition)
+    api.fadeIn = function(id, duration = 1000) {
+        const textObject = textObjects.find(obj => obj.id === id);
+        if (!textObject) {
+            logScriptMessage(scriptId, `Text object ${id} not found`, 'error');
+            return null;
+        }
+        
+        const steps = 60;
+        const interval = duration / steps;
+        let currentStep = 0;
+        
+        const fadeInterval = api.setInterval(() => {
+            currentStep++;
+            const opacity = currentStep / steps;
+            
+            const colors = [];
+            const textLength = textObject.text.length;
+            const baseColor = textObject.color;
+            
+            for (let i = 0; i < textLength; i++) {
+                const r = (baseColor >> 16) & 0xFF;
+                const g = (baseColor >> 8) & 0xFF;
+                const b = baseColor & 0xFF;
+                
+                const newR = Math.floor(r * opacity);
+                const newG = Math.floor(g * opacity);
+                const newB = Math.floor(b * opacity);
+                
+                colors.push((newR << 16) | (newG << 8) | newB);
+            }
+            
+            api.setCharacterColors(id, colors);
+            
+            if (currentStep >= steps) {
+                clearInterval(fadeInterval);
+                // Reset to normal colors after fade complete
+                api.setCharacterColors(id, []);
+            }
+        }, interval);
+        
+        return fadeInterval;
+    };
+    
+    // Fade transition - fade out, change text, fade in
+    api.fadeTransition = function(id, newText, fadeOutDuration = 800, fadeInDuration = 800) {
+        const textObject = textObjects.find(obj => obj.id === id);
+        if (!textObject) {
+            logScriptMessage(scriptId, `Text object ${id} not found`, 'error');
+            return null;
+        }
+        
+        // Fade out
+        api.fadeOut(id, fadeOutDuration);        // Change text in the middle
+        api.setTimeout(() => {
+            api.updateTextObject(id, { text: newText });            // Fade in with new text
+            api.setTimeout(() => {
+                api.fadeIn(id, fadeInDuration);
+            }, 50); // Small delay to ensure text is updated
+            
+        }, fadeOutDuration);
+    };    // Draw a triangle in world space
+    api.drawTriangle = function(x1, y1, x2, y2, x3, y3, color) {
+        ipcRenderer.send('draw-triangle', {
+            x1, y1, x2, y2, x3, y3, color
+        });
+    };
+    
+    // Clear all triangles (for animation frames)
+    api.clearTriangles = function() {
+        ipcRenderer.send('clear-triangles');
+    };
+    
+    // Batch draw multiple triangles (better for animation)
+    api.drawTriangles = function(triangles) {
+        ipcRenderer.send('draw-triangles-batch', { triangles });
+    };
+    // 3D Math Helpers
+    api.rotateX = function(x, y, z, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: x,
+            y: y * cos - z * sin,
+            z: y * sin + z * cos
+        };
+    };
+    
+    api.rotateY = function(x, y, z, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: x * cos + z * sin,
+            y: y,
+            z: -x * sin + z * cos
+        };
+    };
+    
+    api.rotateZ = function(x, y, z, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: x * cos - y * sin,
+            y: x * sin + y * cos,
+            z: z
+        };
+    };
+    
+    api.project3D = function(x, y, z, distance = 500) {
+        const scale = distance / (distance + z);
+        return {
+            x: x * scale + 640, // Center at 640 (half of 1280)
+            y: y * scale + 360  // Center at 360 (half of 720)
+        };
+    };
+
+    return api;
 }
 
 // Log script messages to console and send to script editor window
@@ -1033,9 +1179,8 @@ function runScript(id) {
     
     try {
         // Create the script API
-        const api = createScriptAPI(id);        // Create a function from the script code with API in scope
-        const scriptFunction = new Function(
-            'createTextObject',
+        const api = createScriptAPI(id);        const scriptFunction = new Function(
+            'createTextObject', 
             'updateTextObject', 
             'deleteTextObject',
             'randomColor',
@@ -1044,10 +1189,17 @@ function runScript(id) {
             'waveEffect',
             'bounceEffect',
             'shakeEffect',
+            'drawTriangle',
+            'clearTriangles',
+            'drawTriangles',
+            'rotateX',
+            'rotateY',
+            'rotateZ',
+            'project3D',
             'setTimeout',
             'setInterval',
             'console',
-            script.code
+            script.code  // This is the function BODY, not a parameter
         );        // Execute the script with API functions
         scriptFunction(
             api.createTextObject,
@@ -1059,6 +1211,13 @@ function runScript(id) {
             api.waveEffect,
             api.bounceEffect,
             api.shakeEffect,
+            api.drawTriangle,
+            api.clearTriangles,
+            api.drawTriangles,
+            api.rotateX,
+            api.rotateY,
+            api.rotateZ,
+            api.project3D,
             api.setTimeout,
             api.setInterval,
             api.console
@@ -1098,10 +1257,11 @@ function stopScript(id) {
     });    // Clear all intervals
     scriptState.intervals.forEach(intervalId => {
         clearInterval(intervalId);
-    });
-    
-    // Clear callback tracking
+    });    // Clear callback tracking
     scriptState.intervalCallbacks.clear();
+    
+    // Clear all triangles when script stops
+    ipcRenderer.send('clear-triangles');
     
     // Remove from running scripts
     runningScripts.delete(id);
@@ -2669,10 +2829,15 @@ ipcRenderer.on('user-settings-loaded', (event, loadedSettings) => {
         if (loadedSettings.ui.accentColor) {
             document.getElementById('accent-color').value = loadedSettings.ui.accentColor;
             applyAccentColor(loadedSettings.ui.accentColor);
-        }
-        if (loadedSettings.ui.showOverlayControls !== undefined) {
+        }        if (loadedSettings.ui.showOverlayControls !== undefined) {
             document.getElementById('show-overlay-controls').checked = loadedSettings.ui.showOverlayControls;
-        }    }    // Apply default settings
+        }
+        // ALWAYS start with click-through disabled for safety
+        document.getElementById('enable-click-through').checked = false;
+        ipcRenderer.send('toggle-click-through', false);
+    }
+    
+    // Apply default settings
     if (loadedSettings.defaults) {
         if (loadedSettings.defaults.fontSize !== undefined) {
             const elem = document.getElementById('default-font-size');
@@ -2691,9 +2856,7 @@ ipcRenderer.on('user-settings-loaded', (event, loadedSettings) => {
         }
     } else {
         document.getElementById('default-font-size').value = 48;
-    }
-    
-    // Apply auto-save settings
+    }    // Apply auto-save settings
     if (loadedSettings.autoSave) {
         if (loadedSettings.autoSave.enabled) {
             document.getElementById('auto-save-enabled').checked = loadedSettings.autoSave.enabled;
@@ -2747,10 +2910,11 @@ ipcRenderer.on('text-object-focused', (event, id) => {
 // Create initial text object on startup
 window.addEventListener('DOMContentLoaded', () => {
     // Load API keys from keychain
-    ipcRenderer.send('get-all-api-keys');
-    
-    // LOAD ALL LOCAL FONTS FROM fonts/ DIRECTORY
+    ipcRenderer.send('get-all-api-keys');    // LOAD ALL LOCAL FONTS FROM fonts/ DIRECTORY
     loadLocalFontsFromDirectory();
+    
+    // CRITICAL: Always initialize click-through as disabled on startup
+    document.getElementById('enable-click-through').checked = false;
     
     // Settings will be automatically sent via did-finish-load event in main.js    // Create default animation preset first
     createAnimationPreset();
@@ -2774,13 +2938,11 @@ window.addEventListener('DOMContentLoaded', () => {
         // Ctrl+Z to undo position
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
-            console.log('UNDO pressed, history length:', positionHistory.length, 'index:', positionHistoryIndex);
             undoPosition();
         }
         // Ctrl+Y to redo position
         if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
             e.preventDefault();
-            console.log('REDO pressed');
             redoPosition();
         }
     });
@@ -2866,7 +3028,17 @@ function updateAccentColor(color) {
     });    // Settings handlers
     document.getElementById('show-overlay-controls').addEventListener('change', (e) => {
         ipcRenderer.send('toggle-overlay-controls', e.target.checked);
-    });    // Auto-save functionality
+    });    document.getElementById('enable-click-through').addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        ipcRenderer.send('toggle-click-through', enabled);
+        
+        // When click-through is enabled, unfocus all text objects in overlay
+        if (enabled) {
+            ipcRenderer.send('unfocus-all-text-objects');
+        }
+    });
+
+    // Auto-save functionality
     document.getElementById('auto-save-enabled').addEventListener('change', (e) => {
         if (e.target.checked) {
             // Check if we have a project file to save to
@@ -2916,12 +3088,13 @@ function updateAccentColor(color) {
         saveDebounceTimer = setTimeout(() => {
             ipcRenderer.send('update-user-setting', { path, value });
         }, 500); // Wait 500ms after last change
-    }
-    
-    document.getElementById('show-overlay-controls').addEventListener('change', (e) => {
+    }    document.getElementById('show-overlay-controls').addEventListener('change', (e) => {
         debouncedSave('ui.showOverlayControls', e.target.checked);
     });
     
+    document.getElementById('enable-click-through').addEventListener('change', (e) => {
+        debouncedSave('ui.clickThrough', e.target.checked);
+    });
     document.getElementById('default-font-size').addEventListener('change', (e) => {
         debouncedSave('defaults.fontSize', parseInt(e.target.value));
     });
@@ -2936,9 +3109,7 @@ function updateAccentColor(color) {
     
     document.getElementById('auto-save-enabled').addEventListener('change', (e) => {
         debouncedSave('autoSave.enabled', e.target.checked);
-    });
-    
-    document.getElementById('auto-save-interval').addEventListener('change', (e) => {
+    });    document.getElementById('auto-save-interval').addEventListener('change', (e) => {
         debouncedSave('autoSave.interval', parseInt(e.target.value));
     });
     
@@ -2988,13 +3159,16 @@ function updateAccentColor(color) {
                     input.style.cursor = 'ew-resize';
                     input.style.backgroundColor = '#161616';
                     input.blur();
-                }
-                
-                if (isDragging) {
+                }                if (isDragging) {
                     const delta = moveEvent.clientX - startX;
                     const step = parseFloat(input.step) || 1;
                     const sensitivity = isPositionInput ? 5 : 1;
-                    const newValue = startValue + (delta * step * sensitivity);
+                    
+                    // Invert Y direction so dragging right = UP (smaller Y value)
+                    const isYInput = input.id.includes('pos-y-');
+                    const multiplier = isYInput ? -1 : 1;
+                    
+                    const newValue = startValue + (delta * step * sensitivity * multiplier);
                     
                     const min = input.min !== '' ? parseFloat(input.min) : -Infinity;
                     const max = input.max !== '' ? parseFloat(input.max) : Infinity;

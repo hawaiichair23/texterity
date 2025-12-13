@@ -3,8 +3,10 @@ const { ipcRenderer } = require('electron');
 
 let app;
 let backgroundRect;
+let trianglesGraphics; // Global Graphics object for ALL standalone triangles
 let textObjects = new Map(); // Store multiple text objects by ID
 let globalLoopTimer = null; // Single global loop timer for all objects
+let clickThroughEnabled = false; // Track click-through mode state
 
 // Color pool for unique pastel colors
 let usedColors = new Set();
@@ -97,12 +99,29 @@ class TextObject {
         this.hitBox.on('pointerover', () => {
             if (this.container.children.length > 0) {
                 this.hoverBox.visible = true;
+                
+                // Disable click-through when hovering over text (allows dragging)
+                ipcRenderer.send('set-click-through-temporarily', false);
             }
-        });
-        
-        this.hitBox.on('pointerout', () => {
-            if (!this.isDragging && !this.isFocused) {
-                this.hoverBox.visible = false;
+        });        this.hitBox.on('pointerout', () => {
+            if (!this.isDragging) {
+                // In click-through mode: hide box and unfocus when mouse leaves
+                // In normal mode: keep box visible when focused (clicked)
+                if (clickThroughEnabled) {
+                    this.hoverBox.visible = false;
+                    this.setFocused(false);
+                    ipcRenderer.send('text-object-focused', null);
+                } else {
+                    // Normal mode: only hide box if not focused
+                    if (!this.isFocused) {
+                        this.hoverBox.visible = false;
+                    }
+                }
+            }
+            
+            // Re-enable click-through when leaving text (if click-through mode is on)
+            if (!this.isDragging) {
+                ipcRenderer.send('restore-click-through-state');
             }
         });        // Click to focus
         this.hitBox.on('pointerdown', () => {
@@ -738,11 +757,14 @@ async function initPixi() {
         resizeTo: window
     });
     
-    document.getElementById('pixi-container').appendChild(app.canvas);
-    
-    backgroundRect = new PIXI.Graphics();
+    document.getElementById('pixi-container').appendChild(app.canvas);    backgroundRect = new PIXI.Graphics();
     backgroundRect.zIndex = -1;
     app.stage.addChild(backgroundRect);
+    
+    // Initialize triangles graphics layer (above background, below text)
+    trianglesGraphics = new PIXI.Graphics();
+    trianglesGraphics.zIndex = -0.5; // Between background (-1) and text (0)
+    app.stage.addChild(trianglesGraphics);
     
     drawBackground(globalSettings.backgroundColor);    app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -757,9 +779,7 @@ async function initPixi() {
             });
             ipcRenderer.send('text-object-focused', null);
         }
-    });
-    
-    await document.fonts.load(`48px "Instrument Serif"`).catch(err => 
+    });    await document.fonts.load(`48px "Instrument Serif"`).catch(err => 
         console.warn('Failed to preload Instrument Serif:', err)
     );
     document.fonts.load(`48px "Inter"`).catch(err => 
@@ -775,6 +795,18 @@ function drawBackground(color) {
 
 function clearBackground() {
     backgroundRect.clear();
+}
+
+// Draw a triangle - adds to the global triangles graphics object
+function drawTriangle(x1, y1, x2, y2, x3, y3, color) {
+    // Draw triangle using polygon
+    trianglesGraphics.poly([x1, y1, x2, y2, x3, y3]);
+    trianglesGraphics.fill(color);
+}
+
+// Clear all triangles
+function clearTriangles() {
+    trianglesGraphics.clear();
 }
 
 // IPC Message Handlers
@@ -830,6 +862,24 @@ ipcRenderer.on('update-character-colors', (event, data) => {
     if (textObj) {
         textObj.setCharacterColors(data.colors);
     }
+});
+
+ipcRenderer.on('draw-triangle', (event, data) => {
+    drawTriangle(data.x1, data.y1, data.x2, data.y2, data.x3, data.y3, data.color);
+});
+
+ipcRenderer.on('clear-triangles', () => {
+    clearTriangles();
+});
+
+ipcRenderer.on('draw-triangles-batch', (event, data) => {
+    // Clear first, then draw all triangles atomically
+    trianglesGraphics.clear();
+    
+    data.triangles.forEach(tri => {
+        trianglesGraphics.poly([tri.x1, tri.y1, tri.x2, tri.y2, tri.x3, tri.y3]);
+        trianglesGraphics.fill(tri.color);
+    });
 });
 
 ipcRenderer.on('update-text-object-settings', (event, data) => {
@@ -1025,6 +1075,21 @@ ipcRenderer.on('toggle-overlay-controls', (event, show) => {
     if (titlebar) {
         titlebar.style.display = show ? 'flex' : 'none';
     }
+});
+
+// Unfocus all text objects (when entering click-through mode)
+ipcRenderer.on('unfocus-all-text-objects', () => {
+    clickThroughEnabled = true; // Enable click-through mode
+    textObjects.forEach(textObj => {
+        textObj.setFocused(false);
+    });
+    // Also notify control panel
+    ipcRenderer.send('text-object-focused', null);
+});
+
+// Listen for click-through mode changes
+ipcRenderer.on('click-through-mode-changed', (event, enabled) => {
+    clickThroughEnabled = enabled;
 });
 
 // Initialize
