@@ -332,7 +332,29 @@ ipcMain.on('open-font-dialog', (event, textObjectId) => {
                 console.error('Error parsing font:', error);
                 // Fallback to filename if parsing fails
                 const fontName = path.basename(fontPath, path.extname(fontPath));
-                event.sender.send('font-selected', { textObjectId, fontPath, fontName });
+                event.sender.send('font-selected', { textObjectId, fontPath, fontName });            }
+        }
+    });
+});
+
+// OBJ dialog for selecting 3D model files
+ipcMain.on('open-obj-dialog', (event) => {
+    dialog.showOpenDialog(controlWindow, {
+        properties: ['openFile'],
+        filters: [
+            { name: '3D Model Files', extensions: ['obj'] },
+            { name: 'All Files', extensions: ['*'] }
+        ]
+    }).then(result => {
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0];
+            
+            // Read the OBJ file content
+            try {
+                const content = fs.readFileSync(filePath, 'utf-8');
+                event.sender.send('obj-file-selected', { filePath, content });
+            } catch (error) {
+                console.error('Error reading OBJ file:', error);
             }
         }
     });

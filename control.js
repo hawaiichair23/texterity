@@ -1357,6 +1357,11 @@ document.getElementById('add-script-btn').addEventListener('click', () => {
     createScript();
 });
 
+// Import OBJ button
+document.getElementById('import-obj-btn').addEventListener('click', () => {
+    ipcRenderer.send('open-obj-dialog');
+});
+
 function createTextObject() {
     const id = nextObjectId++;
     
@@ -2722,10 +2727,135 @@ ipcRenderer.on('font-selected', (event, { textObjectId, fontPath, fontName }) =>
                 select.value = fontFamily;
             }
             ipcRenderer.send('update-text-object-settings', { id: textObjectId, fontFamily });
-        }
-        
-        showToast(`Font "${fontFamily}" imported!`, 'success');
+        }        showToast(`Font "${fontFamily}" imported!`, 'success');
     }, 100);
+});
+
+// OBJ file parser
+function parseOBJ(objText) {
+    const lines = objText.split('\n');
+    const vertices = [];
+    const faces = [];
+    
+    for (let line of lines) {
+        line = line.trim();
+        
+        // Skip comments and empty lines
+        if (line.startsWith('#') || line === '') continue;
+        
+        const parts = line.split(/\s+/);
+        const type = parts[0];
+        
+        if (type === 'v') {
+            // Vertex: v x y z
+            const x = parseFloat(parts[1]);
+            const y = parseFloat(parts[2]);
+            const z = parseFloat(parts[3]);
+            vertices.push([x, y, z]);
+        } else if (type === 'f') {
+            // Face: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+            // We only care about vertex indices
+            const v1 = parseInt(parts[1].split('/')[0]) - 1; // OBJ indices start at 1
+            const v2 = parseInt(parts[2].split('/')[0]) - 1;
+            const v3 = parseInt(parts[3].split('/')[0]) - 1;
+            faces.push([v1, v2, v3]);
+            
+            // If face has 4 vertices (quad), split into two triangles
+            if (parts.length > 4) {
+                const v4 = parseInt(parts[4].split('/')[0]) - 1;
+                faces.push([v1, v3, v4]);
+            }
+        }
+    }
+    
+    return { vertices, faces };
+}
+
+// Generate JavaScript code from parsed OBJ
+function generateOBJCode(vertices, faces, modelName) {
+    // Auto-scale: find the largest dimension and scale to ~200 units
+    let maxDim = 0;
+    for (let v of vertices) {
+        maxDim = Math.max(maxDim, Math.abs(v[0]), Math.abs(v[1]), Math.abs(v[2]));
+    }    const scale = maxDim > 0 ? 150 / maxDim : 100;
+    
+    let code = `// 3D Model: ${modelName}\n`;
+    code += `// Auto-scaled by ${scale.toFixed(2)}x\n`;
+    code += `const ${modelName}Vertices = [\n`;
+    
+    // Add vertices with scaling (flip Y to fix upside down)
+    for (let i = 0; i < vertices.length; i++) {
+        const v = vertices[i];
+        code += `    [${(v[0] * scale).toFixed(2)}, ${(-v[1] * scale).toFixed(2)}, ${(v[2] * scale).toFixed(2)}]`;
+        if (i < vertices.length - 1) code += ',';
+        code += '\n';
+    }
+    code += '];\n\n';
+    
+    code += `const ${modelName}Faces = [\n`;
+    
+    // Add faces
+    for (let i = 0; i < faces.length; i++) {
+        const f = faces[i];
+        code += `    [${f[0]}, ${f[1]}, ${f[2]}]`;
+        if (i < faces.length - 1) code += ',';
+        code += '\n';
+    }
+    code += '];\n\n';    // Add example animation code
+    code += `// Simple horizontal rotation\n`;
+    code += `let angle = 0;\n\n`;
+    code += `startAnimation(function() {\n`;
+    code += `    const projected = ${modelName}Vertices.map(v => {\n`;
+    code += `        let rotated = rotateY(v[0], v[1], v[2], angle);\n`;
+    code += `        return project3D(rotated.x, rotated.y, rotated.z);\n`;
+    code += `    });\n\n`;
+    code += `    const triangles = [];\n`;
+    code += `    ${modelName}Faces.forEach(face => {\n`;
+    code += `        const v1 = projected[face[0]];\n`;
+    code += `        const v2 = projected[face[1]];\n`;
+    code += `        const v3 = projected[face[2]];\n`;
+    code += `        triangles.push({\n`;
+    code += `            x1: v1.x, y1: v1.y,\n`;
+    code += `            x2: v2.x, y2: v2.y,\n`;
+    code += `            x3: v3.x, y3: v3.y,\n`;
+    code += `            color: 0xCCCCCC  // Gray/white color\n`;
+    code += `        });\n`;
+    code += `    });\n\n`;
+    code += `    drawTriangles(triangles);\n`;
+    code += `    angle += 0.01;  // Slower rotation\n`;
+    code += `});\n`;
+    
+    return code;
+}
+
+// OBJ file selection response
+ipcRenderer.on('obj-file-selected', (event, { filePath, content }) => {
+    try {        // Parse OBJ file
+        const { vertices, faces } = parseOBJ(content);
+        
+        // Get model name from filename (path is already required at top of file)
+        const fileName = path.basename(filePath, '.obj');
+        const modelName = fileName.replace(/[^a-zA-Z0-9]/g, ''); // Remove special chars
+        
+        // Generate JavaScript code
+        const code = generateOBJCode(vertices, faces, modelName);
+        
+        // Create a new script with the generated code
+        const id = nextScriptId++;
+        const script = {
+            id: id,
+            name: `${fileName} Model`,
+            code: code,
+            isRunning: false        };
+        
+        scripts.push(script);
+        renderScript(script);
+        
+        showToast(`Imported ${vertices.length} vertices, ${faces.length} faces`, 'success');
+        
+    } catch (error) {
+        showToast(`Error parsing OBJ file: ${error.message}`, 'error');
+    }
 });
 
 // File content updates

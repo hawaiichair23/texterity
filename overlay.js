@@ -25,6 +25,33 @@ const pastelColors = [
     0xBAFFFF, // pastel cyan
 ];
 
+// Neon colors for 3D objects
+let usedNeonColors = new Set();
+let scriptNeonColors = new Map(); // Map scriptId to assigned neon color
+const neonColors = [
+    0x00FFFF, // cyan
+    0xFF00FF, // magenta
+    0x00FF00, // lime green
+    0xFF0080, // hot pink
+    0x80FF00, // chartreuse
+    0xFF6600, // orange
+    0x0080FF, // electric blue
+    0xFFFF00, // yellow
+    0xFF0040, // red-pink
+    0x00FFAA, // aquamarine
+];
+
+function getRandomNeonColor() {
+    const availableColors = neonColors.filter(color => !usedNeonColors.has(color));
+    if (availableColors.length === 0) {
+        usedNeonColors.clear();
+        availableColors.push(...neonColors);
+    }
+    const color = availableColors[Math.floor(Math.random() * availableColors.length)];
+    usedNeonColors.add(color);
+    return color;
+}
+
 const globalSettings = {
     backgroundColor: 0x000000,
     backgroundTransparent: false
@@ -1141,6 +1168,10 @@ ipcRenderer.on('start-animation', (event, data) => {
                     hoverBox.visible = false;
                     app.stage.addChild(hoverBox);
                     scriptHoverBoxMap.set(scriptId, hoverBox);
+
+                    // Assign unique neon color
+                    const neonColor = getRandomNeonColor();
+                    scriptNeonColors.set(scriptId, neonColor);
                     
                     // Setup drag and hover handlers
                     let isDragging = false;
@@ -1244,7 +1275,8 @@ ipcRenderer.on('start-animation', (event, data) => {
                 
                 hoverBox.clear();
                 hoverBox.rect(minX - padding, minY - padding, (maxX - minX) + padding * 2, (maxY - minY) + padding * 2);
-                hoverBox.stroke({ width: 1, color: 0x00FFFF }); // Cyan border
+                const neonColor = scriptNeonColors.get(scriptId) || 0x00FFFF;
+                hoverBox.stroke({ width: 1, color: neonColor });
             },
             animationCallback: null  // Will be set by startAnimation call
         };
@@ -1317,8 +1349,15 @@ ipcRenderer.on('stop-animation', (event, data) => {
         app.stage.removeChild(hoverBox);
         hoverBox.destroy();
         scriptHoverBoxMap.delete(scriptId);
-    }    // Clean up position offset
+    }// Clean up position offset
     scriptPositionOffsets.delete(scriptId);
+
+    // Return neon color to pool
+    if (scriptNeonColors.has(scriptId)) {
+        const color = scriptNeonColors.get(scriptId);
+        usedNeonColors.delete(color);
+        scriptNeonColors.delete(scriptId);
+    }
 });
 
 // Initialize
