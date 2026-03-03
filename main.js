@@ -235,6 +235,7 @@ const TO_OVERLAY = [
     'update-text-object',
     'update-text-object-position',
     'update-character-offsets',
+    'update-character-colors',
     'draw-triangle',
     'clear-triangles',
     'draw-triangles-batch',

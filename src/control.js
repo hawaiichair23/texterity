@@ -78,12 +78,11 @@ const SYSTEM_FONTS = [
 const loadedGoogleFonts = new Set();
 
 // Load all fonts from fonts/ directory
-// Load all fonts from fonts/ directory
 function loadLocalFontsFromDirectory() {
     const fs = require('fs');
     const path = require('path');
 
-    const fontsDir = path.join(__dirname, 'fonts');
+    const fontsDir = path.join(__dirname, '../fonts');
 
     // Weight keywords to strip from font names
     const weightKeywords = ['Thin', 'ExtraLight', 'Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black', 'Heavy', 'Hairline', 'Ultra'];
@@ -849,23 +848,17 @@ function createScriptAPI(scriptId) {
             return true;
         },
         
-        // Set per-character colors (for ombré effects)
+        // Set per-character colors
         setCharacterColors: function(id, colors) {
             const textObject = textObjects.find(obj => obj.id === id);
             if (!textObject) {
                 logScriptMessage(scriptId, `Text object ${id} not found`, 'error');
                 return false;
             }
-            
-            // Send to overlay
-            ipcRenderer.send('update-character-colors', {
-                id,
-                colors
-            });
-            
+            ipcRenderer.send('update-character-colors', { id, colors });
             return true;
         },
-        
+
         // Wrapped setTimeout that tracks timers for cleanup
         setTimeout: function(callback, delay) {
             const timeoutId = setTimeout(() => {
@@ -3593,15 +3586,6 @@ function updateAccentColor(color) {
                         if (match) {
                             const id = parseInt(match[1]);
                             updatePosition(id, false);
-                        }
-                    }
-
-                    const fontSizeMatch = input.id.match(/font-size-(\d+)/);
-                    if (fontSizeMatch) {
-                        const id = parseInt(fontSizeMatch[1]);
-                        const obj = textObjects.find(o => o.id === id);
-                        if (obj) {
-                            ipcRenderer.send('update-text-object-settings', { id, fontSize: obj.fontSize, silent: false });
                         }
                     }
                 } else {

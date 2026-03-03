@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texterity Spellbook</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0c0f;
+            --bg2: #13131a;
+            --bg3: #1a1a24;
+            --border: #2a2a3a;
+            --accent: #7c6aff;
+            --accent2: #ff6a9b;
+            --accent3: #6affd4;
+            --text: #e8e8f0;
+            --muted: #6b6b80;
+            --code-bg: #0a0a12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        nav {
+            width: 220px;
+            min-width: 220px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            padding: 32px 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .nav-logo {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 22px;
+            color: var(--text);
+            padding: 0 24px 28px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .nav-logo span {
+            display: block;
+            font-family: 'DM Mono', monospace;
+            font-style: normal;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        nav a {
+            display: block;
+            padding: 7px 24px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 0.03em;
+            transition: color 0.15s, background 0.15s;
+            border-left: 2px solid transparent;
+        }
+
+        nav a:hover {
+            color: var(--text);
+            background: var(--bg3);
+            border-left-color: var(--accent);
+        }
+
+        nav .nav-section-label {
+            padding: 18px 24px 6px;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            opacity: 0.5;
+        }
+
+        /* MAIN */
+        main {
+            flex: 1;
+            padding: 60px 72px;
+            max-width: 860px;
+        }
+
+        header {
+            margin-bottom: 64px;
+        }
+
+        header h1 {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 52px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        section {
+            margin-bottom: 72px;
+        }
+
+        h2 {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 30px;
+            color: var(--text);
+            margin-bottom: 28px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* FUNCTION CARD */
+        .fn-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .fn-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fn-name {
+            color: var(--accent);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .fn-sig {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .fn-body {
+            padding: 16px 20px;
+        }
+
+        .fn-desc {
+            color: #a0a0b8;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        /* PARAMS TABLE */
+        .params {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        .params th {
+            text-align: left;
+            padding: 6px 12px;
+            background: var(--bg3);
+            color: var(--muted);
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .params td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .params tr:last-child td {
+            border-bottom: none;
+        }
+
+        .param-name {
+            color: var(--accent3);
+        }
+
+        .param-default {
+            color: var(--accent2);
+        }
+
+        .param-desc {
+            color: #8888a0;
+        }
+
+        /* CODE BLOCK */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px 18px;
+            overflow-x: auto;
+            font-size: 12.5px;
+            line-height: 1.65;
+        }
+
+        .kw {
+            color: var(--accent);
+        }
+
+        .fn {
+            color: #6af0ff;
+        }
+
+        .str {
+            color: var(--accent3);
+        }
+
+        .num {
+            color: var(--accent2);
+        }
+
+        .cm {
+            color: #444466;
+            font-style: italic;
+        }
+
+        .prop {
+            color: #c0a0ff;
+        }
+
+        /* BADGE */
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .badge-returns {
+            background: #1a2a1a;
+            color: var(--accent3);
+            border: 1px solid #2a4a2a;
+        }
+
+        .badge-note {
+            background: #2a1a2a;
+            color: var(--accent2);
+            border: 1px solid #4a2a4a;
+        }
+
+        .note {
+            background: #1a1420;
+            border-left: 3px solid var(--accent2);
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            color: #b090c0;
+            font-size: 12px;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="nav-logo">
+            <span>Texterity</span>
+            Spellbook
+        </div>
+        <div class="nav-section-label">Text</div>
+        <a href="#text-objects">Text Objects</a>
+        <div class="nav-section-label">Styling</div>
+        <a href="#colors">Colors</a>
+        <div class="nav-section-label">Effects</div>
+        <a href="#effects">Effects</a>
+        <a href="#transitions">Transitions</a>
+        <div class="nav-section-label">Control</div>
+        <a href="#timers">Timers</a>
+        <a href="#drawing">Drawing</a>
+        <a href="#animation-loop">Animation Loop</a>
+        <a href="#console">Console</a>
+        <div class="nav-section-label">Examples</div>
+        <a href="#examples">Text Effects</a>
+        <a href="#3d-examples">3D</a>
+    </nav>
+
+    <main>
+        <header>
+            <h1>The Spellbook</h1>
+            <p>Texterity Script API reference — every function, param, and default.</p>
+        </header>
+
+        <!-- TEXT OBJECTS -->
+        <section id="text-objects">
+            <h2>Text Objects</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">createTextObject</span>
+                    <span class="fn-sig">(config) → id</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Creates a new text object on the overlay. If a text object with the same
+                        <code>name</code> already exists, it reuses it instead of creating a duplicate — safe to call on
+                        every script run.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">name</td>
+                            <td class="param-default">—</td>
+                            <td class="param-desc">Unique name. Used to reuse the object on re-run.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">text</td>
+                            <td class="param-default">'New Text'</td>
+                            <td class="param-desc">The displayed string.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">x</td>
+                            <td class="param-default">center</td>
+                            <td class="param-desc">Horizontal position in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">y</td>
+                            <td class="param-default">center</td>
+                            <td class="param-desc">Vertical position in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">fontSize</td>
+                            <td class="param-default">48</td>
+                            <td class="param-desc">Font size in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">fontFamily</td>
+                            <td class="param-default">'Instrument Serif'</td>
+                            <td class="param-desc">Font name.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">color</td>
+                            <td class="param-default">0xFFFFFF</td>
+                            <td class="param-desc">Text fill color as hex number.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">outlineEnabled</td>
+                            <td class="param-default">true</td>
+                            <td class="param-desc">Whether to show a text outline.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">outlineColor</td>
+                            <td class="param-default">0x000000</td>
+                            <td class="param-desc">Outline color.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">outlineWidth</td>
+                            <td class="param-default">4</td>
+                            <td class="param-desc">Outline thickness.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="kw">const</span> myText = <span class="fn">createTextObject</span>({
+  <span class="prop">name</span>: <span class="str">'My Text'</span>,
+  <span class="prop">text</span>: <span class="str">'Hello World'</span>,
+  <span class="prop">x</span>: <span class="num">640</span>,
+  <span class="prop">y</span>: <span class="num">360</span>,
+  <span class="prop">fontSize</span>: <span class="num">60</span>,
+  <span class="prop">color</span>: <span class="num">0xFFFFFF</span>
+});</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">updateTextObject</span>
+                    <span class="fn-sig">(id, updates)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Updates properties on an existing text object. Supports <code>text</code>,
+                        <code>x</code>, <code>y</code>, <code>fontSize</code>, <code>color</code>,
+                        <code>fontFamily</code>.</p>
+                    <pre><span class="fn">updateTextObject</span>(myText, { <span class="prop">text</span>: <span class="str">'New text'</span>, <span class="prop">x</span>: <span class="num">100</span>, <span class="prop">y</span>: <span class="num">200</span> });</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">deleteTextObject</span>
+                    <span class="fn-sig">(id)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Removes a text object from the overlay and control panel.</p>
+                    <pre><span class="fn">deleteTextObject</span>(myText);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLORS -->
+        <section id="colors">
+            <h2>Colors</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">setCharacterColors</span>
+                    <span class="fn-sig">(id, colors[])</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Sets a tint color on each individual character. The array must match the full
+                        text length exactly — spaces count as characters.</p>
+                    <div class="note">Base text color should be white (<code>0xFFFFFF</code>) for tint to render
+                        correctly. Tint multiplies against the base color.</div>
+                    <pre><span class="fn">setCharacterColors</span>(myText, [
+  <span class="num">0xff0000</span>, <span class="cm">// H</span>
+  <span class="num">0xff8800</span>, <span class="cm">// e</span>
+  <span class="num">0xffff00</span>, <span class="cm">// l</span>
+  <span class="num">0x00ff00</span>, <span class="cm">// l</span>
+  <span class="num">0x0088ff</span>, <span class="cm">// o</span>
+]);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">randomColor</span>
+                    <span class="fn-sig">() → number</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Returns a random color as a hex number.</p>
+                    <pre><span class="kw">const</span> col = <span class="fn">randomColor</span>(); <span class="cm">// e.g. 0xa3f2c1</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- EFFECTS -->
+        <section id="effects">
+            <h2>Effects</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">waveEffect</span>
+                    <span class="fn-sig">(id, amplitude=30, frequency=0.5, speed=0.1) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Animates a sine wave through the characters on the Y axis. Runs continuously.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">amplitude</td>
+                            <td class="param-default">30</td>
+                            <td class="param-desc">Wave height in pixels. Lower = more subtle.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">frequency</td>
+                            <td class="param-default">0.5</td>
+                            <td class="param-desc">How many waves across the text. Lower = longer wave.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">speed</td>
+                            <td class="param-default">0.1</td>
+                            <td class="param-desc">How fast the wave moves. Lower = slower.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">waveEffect</span>(myText); <span class="cm">// default</span>
+<span class="fn">waveEffect</span>(myText, <span class="num">8</span>, <span class="num">0.4</span>, <span class="num">0.05</span>); <span class="cm">// subtle</span></pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">bounceEffect</span>
+                    <span class="fn-sig">(id, height=50, speed=0.1) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Each character bounces with a stagger delay between them.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">height</td>
+                            <td class="param-default">50</td>
+                            <td class="param-desc">Bounce height in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">speed</td>
+                            <td class="param-default">0.1</td>
+                            <td class="param-desc">Bounce speed.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">bounceEffect</span>(myText, <span class="num">30</span>, <span class="num">0.08</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">shakeEffect</span>
+                    <span class="fn-sig">(id, intensity=5) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Applies random X/Y jitter to every character at 50ms intervals.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">intensity</td>
+                            <td class="param-default">5</td>
+                            <td class="param-desc">Max pixel displacement in each direction.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">shakeEffect</span>(myText, <span class="num">3</span>); <span class="cm">// subtle tremor</span></pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">spiralInEffect</span>
+                    <span class="fn-sig">(id, radius=40, speed=0.06, stagger=0.6, linger=0) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Characters spiral in one by one from an orbit radius down to their resting
+                        position. Loops continuously.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">radius</td>
+                            <td class="param-default">40</td>
+                            <td class="param-desc">Orbit radius in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">speed</td>
+                            <td class="param-default">0.06</td>
+                            <td class="param-desc">Spiral speed.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">stagger</td>
+                            <td class="param-default">0.6</td>
+                            <td class="param-desc">Delay between each character starting.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">linger</td>
+                            <td class="param-default">0</td>
+                            <td class="param-desc">Ms to pause at rest between cycles.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">spiralInEffect</span>(myText, <span class="num">40</span>, <span class="num">0.06</span>, <span class="num">0.6</span>, <span class="num">1000</span>); <span class="cm">// 1s pause</span></pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">extrudeEffect</span>
+                    <span class="fn-sig">(id, distance=6, angle=Math.PI/4, color=0x000000, blur=0)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Adds a drop shadow that creates a 3D extrude look.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">distance</td>
+                            <td class="param-default">6</td>
+                            <td class="param-desc">Shadow offset distance in pixels.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">angle</td>
+                            <td class="param-default">Math.PI/4</td>
+                            <td class="param-desc">Shadow angle in radians. PI/4 = bottom-right.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">color</td>
+                            <td class="param-default">0x000000</td>
+                            <td class="param-desc">Shadow color.</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">blur</td>
+                            <td class="param-default">0</td>
+                            <td class="param-desc">Shadow blur amount.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">extrudeEffect</span>(myText, <span class="num">8</span>, Math.PI / <span class="num">4</span>, <span class="num">0x222222</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">jitterBaseline</span>
+                    <span class="fn-sig">(id, intensity=2)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">One-time random Y nudge per character. Baked in and stays consistent — call once
+                        before your animation to give text an organic, handset feel.</p>
+                    <table class="params">
+                        <tr>
+                            <th>Param</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">intensity</td>
+                            <td class="param-default">2</td>
+                            <td class="param-desc">Max Y displacement in pixels.</td>
+                        </tr>
+                    </table>
+                    <pre><span class="fn">jitterBaseline</span>(myText, <span class="num">3</span>);
+<span class="fn">waveEffect</span>(myText); <span class="cm">// wave plays over the baked jitter</span></pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">setCharacterSize</span>
+                    <span class="fn-sig">(id, sizes[])</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Sets a scale multiplier on each individual character. 1 = normal size.</p>
+                    <pre><span class="fn">setCharacterSize</span>(myText, [<span class="num">1.5</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">0.8</span>]);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">setCharacterOffsets</span>
+                    <span class="fn-sig">(id, offsets[])</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Manually sets X/Y offset for each character. Used internally by wave, bounce,
+                        etc. You can call it directly for custom effects.</p>
+                    <pre><span class="fn">setCharacterOffsets</span>(myText, [
+  { <span class="prop">x</span>: <span class="num">0</span>, <span class="prop">y</span>: <span class="num">-10</span> },
+  { <span class="prop">x</span>: <span class="num">5</span>, <span class="prop">y</span>: <span class="num">0</span> },
+  { <span class="prop">x</span>: <span class="num">0</span>, <span class="prop">y</span>: <span class="num">10</span> }
+]);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRANSITIONS -->
+        <section id="transitions">
+            <h2>Transitions</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">fadeIn</span>
+                    <span class="fn-sig">(id, duration=1000) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Fades the text in over the given duration in milliseconds.</p>
+                    <pre><span class="fn">fadeIn</span>(myText, <span class="num">500</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">fadeOut</span>
+                    <span class="fn-sig">(id, duration=1000) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Fades the text out over the given duration in milliseconds.</p>
+                    <pre><span class="fn">fadeOut</span>(myText, <span class="num">800</span>);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- TIMERS -->
+        <section id="timers">
+            <h2>Timers</h2>
+
+            <div class="note">Use these instead of native <code>setTimeout</code> / <code>setInterval</code>. They are
+                automatically cleaned up when the script stops.</div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">setTimeout</span>
+                    <span class="fn-sig">(callback, delay)</span>
+                </div>
+                <div class="fn-body">
+                    <pre><span class="fn">setTimeout</span>(() => {
+  <span class="fn">updateTextObject</span>(myText, { <span class="prop">text</span>: <span class="str">'Changed!'</span> });
+}, <span class="num">2000</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">setInterval</span>
+                    <span class="fn-sig">(callback, delay) → intervalId</span>
+                </div>
+                <div class="fn-body">
+                    <pre><span class="kw">const</span> id = <span class="fn">setInterval</span>(() => {
+  <span class="cm">// runs every 16ms (~60fps)</span>
+}, <span class="num">16</span>);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- DRAWING -->
+        <section id="drawing">
+            <h2>Drawing</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">drawTriangle</span>
+                    <span class="fn-sig">(x1,y1, x2,y2, x3,y3, color)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Draws a single filled triangle in world space.</p>
+                    <pre><span class="fn">drawTriangle</span>(<span class="num">100</span>,<span class="num">100</span>, <span class="num">200</span>,<span class="num">300</span>, <span class="num">0</span>,<span class="num">300</span>, <span class="num">0xff0000</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">drawTriangles</span>
+                    <span class="fn-sig">(triangles[])</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Batch version of drawTriangle. Preferred for animation frames — more efficient
+                        than calling drawTriangle in a loop.</p>
+                    <pre><span class="fn">drawTriangles</span>([
+  { <span class="prop">x1</span>:<span class="num">0</span>, <span class="prop">y1</span>:<span class="num">0</span>, <span class="prop">x2</span>:<span class="num">100</span>, <span class="prop">y2</span>:<span class="num">0</span>, <span class="prop">x3</span>:<span class="num">50</span>, <span class="prop">y3</span>:<span class="num">100</span>, <span class="prop">color</span>:<span class="num">0x00ff00</span> },
+  { <span class="prop">x1</span>:<span class="num">200</span>, <span class="prop">y1</span>:<span class="num">0</span>, <span class="prop">x2</span>:<span class="num">300</span>, <span class="prop">y2</span>:<span class="num">0</span>, <span class="prop">x3</span>:<span class="num">250</span>, <span class="prop">y3</span>:<span class="num">100</span>, <span class="prop">color</span>:<span class="num">0x0088ff</span> }
+]);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">clearTriangles</span>
+                    <span class="fn-sig">()</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Clears all drawn triangles. Call at the start of each animation frame.</p>
+                    <pre><span class="fn">setInterval</span>(() => {
+  <span class="fn">clearTriangles</span>();
+  <span class="fn">drawTriangles</span>(myFrame);
+}, <span class="num">16</span>);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANIMATION LOOP -->
+        <section id="animation-loop">
+            <h2>Animation Loop</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">startAnimation</span>
+                    <span class="fn-sig">(callback)</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Runs a callback in sync with the PixiJS ticker (every frame). Use for smooth,
+                        frame-perfect animations.</p>
+                    <pre><span class="fn">startAnimation</span>(() => {
+  <span class="cm">// called every frame</span>
+});</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">stopAnimation</span>
+                    <span class="fn-sig">()</span>
+                </div>
+                <div class="fn-body">
+                    <pre><span class="fn">stopAnimation</span>();</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONSOLE -->
+        <section id="console">
+            <h2>Console</h2>
+
+            <div class="fn-card">
+                <div class="fn-body">
+                    <p class="fn-desc">Logs messages to the script console panel.</p>
+                    <pre>console.<span class="fn">log</span>(<span class="str">'hello'</span>);
+console.<span class="fn">warn</span>(<span class="str">'watch out'</span>);
+console.<span class="fn">error</span>(<span class="str">'something broke'</span>);</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXAMPLES -->
+        <section id="examples">
+            <h2>Examples</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">Lissajous Curve</span>
+                    <span class="fn-sig">setCharacterOffsets + setInterval</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Each character follows a Lissajous curve — a parametric path defined by two sine
+                        waves at different frequencies. The result is a looping figure-8 style motion across the whole
+                        word.</p>
+                    <pre><span class="kw">const</span> myText = <span class="fn">createTextObject</span>({
+  <span class="prop">text</span>: <span class="str">'MATHEMATICALVISUALIZATION'</span>,
+  <span class="prop">x</span>: <span class="num">640</span>, <span class="prop">y</span>: <span class="num">360</span>,
+  <span class="prop">fontSize</span>: <span class="num">46</span>,
+  <span class="prop">color</span>: <span class="num">0xFFFF00</span>
+});
+
+<span class="kw">let</span> time = <span class="num">0</span>;
+<span class="fn">setInterval</span>(() => {
+  <span class="kw">const</span> offsets = [];
+  <span class="kw">const</span> textLength = <span class="num">25</span>;
+
+  <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; textLength; i++) {
+    <span class="kw">const</span> t = (i / textLength) * Math.PI * <span class="num">2</span> + time;
+
+    <span class="cm">// Lissajous: x = A*sin(at + δ), y = B*sin(bt)</span>
+    <span class="kw">const</span> x = <span class="num">80</span> * Math.<span class="fn">sin</span>(<span class="num">3</span> * t + Math.PI / <span class="num">4</span>);
+    <span class="kw">const</span> y = <span class="num">60</span> * Math.<span class="fn">sin</span>(<span class="num">2</span> * t);
+
+    offsets.<span class="fn">push</span>({ x, y });
+  }
+
+  <span class="fn">setCharacterOffsets</span>(myText, offsets);
+  time += <span class="num">0.05</span>;
+}, <span class="num">16</span>);</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">Double Helix</span>
+                    <span class="fn-sig">setCharacterOffsets + setInterval</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">Characters follow a double helix path using sine and cosine. The Z axis is
+                        simulated as an X offset, giving a sense of depth as characters rotate through 3D space.</p>
+                    <pre><span class="kw">const</span> myText = <span class="fn">createTextObject</span>({
+  <span class="prop">text</span>: <span class="str">'PINKELEPHANTSONPARADE'</span>,
+  <span class="prop">x</span>: <span class="num">640</span>, <span class="prop">y</span>: <span class="num">360</span>,
+  <span class="prop">fontSize</span>: <span class="num">52</span>,
+  <span class="prop">color</span>: <span class="num">0xFF00FF</span>
+});
+
+<span class="kw">let</span> time = <span class="num">0</span>;
+<span class="fn">setInterval</span>(() => {
+  <span class="kw">const</span> offsets = [];
+  <span class="kw">const</span> textLength = <span class="num">21</span>;
+
+  <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; textLength; i++) {
+    <span class="kw">const</span> t = (i / textLength) * Math.PI * <span class="num">6</span> + time;
+
+    <span class="cm">// Double helix — Z simulated as X offset for depth</span>
+    <span class="kw">const</span> x = Math.<span class="fn">cos</span>(t) * <span class="num">30</span>;
+    <span class="kw">const</span> y = Math.<span class="fn">sin</span>(t) * <span class="num">60</span>;
+
+    offsets.<span class="fn">push</span>({ x, y });
+  }
+
+  <span class="fn">setCharacterOffsets</span>(myText, offsets);
+  time += <span class="num">0.08</span>;
+}, <span class="num">16</span>);</pre>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 3D EXAMPLES -->
+        <section id="3d-examples">
+            <h2>3D Examples</h2>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">Rotating Cube</span>
+                    <span class="fn-sig">rotateY + rotateX + project3D + drawTriangles</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">A cube defined by 8 vertices, rotated on two axes every frame and drawn as 12
+                        triangles (2 per face). Each face has its own color.</p>
+                    <pre><span class="kw">const</span> vertices = [
+  [<span class="num">-100</span>, <span class="num">-100</span>, <span class="num">-100</span>], [<span class="num">100</span>, <span class="num">-100</span>, <span class="num">-100</span>], [<span class="num">100</span>, <span class="num">100</span>, <span class="num">-100</span>], [<span class="num">-100</span>, <span class="num">100</span>, <span class="num">-100</span>],
+  [<span class="num">-100</span>, <span class="num">-100</span>,  <span class="num">100</span>], [<span class="num">100</span>, <span class="num">-100</span>,  <span class="num">100</span>], [<span class="num">100</span>,  <span class="num">100</span>,  <span class="num">100</span>], [<span class="num">-100</span>,  <span class="num">100</span>,  <span class="num">100</span>]
+];
+
+<span class="kw">let</span> angle = <span class="num">0</span>;
+
+<span class="fn">startAnimation</span>(<span class="kw">function</span>() {
+  <span class="kw">const</span> projected = vertices.<span class="fn">map</span>(v => {
+    <span class="kw">let</span> r = <span class="fn">rotateY</span>(v[<span class="num">0</span>], v[<span class="num">1</span>], v[<span class="num">2</span>], angle);
+    r = <span class="fn">rotateX</span>(r.x, r.y, r.z, angle * <span class="num">0.5</span>);
+    <span class="kw">return</span> <span class="fn">project3D</span>(r.x, r.y, r.z);
+  });
+
+  <span class="fn">drawTriangles</span>([
+    <span class="cm">// Front - red</span>
+    { x1:projected[<span class="num">4</span>].x, y1:projected[<span class="num">4</span>].y, x2:projected[<span class="num">5</span>].x, y2:projected[<span class="num">5</span>].y, x3:projected[<span class="num">6</span>].x, y3:projected[<span class="num">6</span>].y, color:<span class="num">0xFF0000</span> },
+    { x1:projected[<span class="num">4</span>].x, y1:projected[<span class="num">4</span>].y, x2:projected[<span class="num">6</span>].x, y2:projected[<span class="num">6</span>].y, x3:projected[<span class="num">7</span>].x, y3:projected[<span class="num">7</span>].y, color:<span class="num">0xFF0000</span> },
+    <span class="cm">// Back - dark red</span>
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">1</span>].x, y2:projected[<span class="num">1</span>].y, x3:projected[<span class="num">2</span>].x, y3:projected[<span class="num">2</span>].y, color:<span class="num">0x880000</span> },
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">2</span>].x, y2:projected[<span class="num">2</span>].y, x3:projected[<span class="num">3</span>].x, y3:projected[<span class="num">3</span>].y, color:<span class="num">0x880000</span> },
+    <span class="cm">// Right - orange</span>
+    { x1:projected[<span class="num">1</span>].x, y1:projected[<span class="num">1</span>].y, x2:projected[<span class="num">5</span>].x, y2:projected[<span class="num">5</span>].y, x3:projected[<span class="num">6</span>].x, y3:projected[<span class="num">6</span>].y, color:<span class="num">0xFF8800</span> },
+    { x1:projected[<span class="num">1</span>].x, y1:projected[<span class="num">1</span>].y, x2:projected[<span class="num">6</span>].x, y2:projected[<span class="num">6</span>].y, x3:projected[<span class="num">2</span>].x, y3:projected[<span class="num">2</span>].y, color:<span class="num">0xFF8800</span> },
+    <span class="cm">// Left - brown</span>
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">4</span>].x, y2:projected[<span class="num">4</span>].y, x3:projected[<span class="num">7</span>].x, y3:projected[<span class="num">7</span>].y, color:<span class="num">0xCC6600</span> },
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">7</span>].x, y2:projected[<span class="num">7</span>].y, x3:projected[<span class="num">3</span>].x, y3:projected[<span class="num">3</span>].y, color:<span class="num">0xCC6600</span> },
+    <span class="cm">// Top - yellow</span>
+    { x1:projected[<span class="num">3</span>].x, y1:projected[<span class="num">3</span>].y, x2:projected[<span class="num">2</span>].x, y2:projected[<span class="num">2</span>].y, x3:projected[<span class="num">6</span>].x, y3:projected[<span class="num">6</span>].y, color:<span class="num">0xFFFF00</span> },
+    { x1:projected[<span class="num">3</span>].x, y1:projected[<span class="num">3</span>].y, x2:projected[<span class="num">6</span>].x, y2:projected[<span class="num">6</span>].y, x3:projected[<span class="num">7</span>].x, y3:projected[<span class="num">7</span>].y, color:<span class="num">0xFFFF00</span> },
+    <span class="cm">// Bottom - olive</span>
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">1</span>].x, y2:projected[<span class="num">1</span>].y, x3:projected[<span class="num">5</span>].x, y3:projected[<span class="num">5</span>].y, color:<span class="num">0xCCCC00</span> },
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">5</span>].x, y2:projected[<span class="num">5</span>].y, x3:projected[<span class="num">4</span>].x, y3:projected[<span class="num">4</span>].y, color:<span class="num">0xCCCC00</span> },
+  ]);
+
+  angle += <span class="num">0.02</span>;
+});</pre>
+                </div>
+            </div>
+
+            <div class="fn-card">
+                <div class="fn-header">
+                    <span class="fn-name">Rotating Pyramid</span>
+                    <span class="fn-sig">rotateY + rotateX + project3D + drawTriangles</span>
+                </div>
+                <div class="fn-body">
+                    <p class="fn-desc">A pyramid with a square base and single apex. Position-shifted to upper-right via
+                        manual X/Y offset on the projected coordinates. Each face a different color.</p>
+                    <pre><span class="kw">const</span> pyramidVertices = [
+  [<span class="num">-80</span>,  <span class="num">80</span>, <span class="num">-80</span>],  <span class="cm">// 0: bottom-left</span>
+  [ <span class="num">80</span>,  <span class="num">80</span>, <span class="num">-80</span>],  <span class="cm">// 1: bottom-right</span>
+  [ <span class="num">80</span>,  <span class="num">80</span>,  <span class="num">80</span>],  <span class="cm">// 2: back-right</span>
+  [<span class="num">-80</span>,  <span class="num">80</span>,  <span class="num">80</span>],  <span class="cm">// 3: back-left</span>
+  [  <span class="num">0</span>, <span class="num">-100</span>,   <span class="num">0</span>]   <span class="cm">// 4: apex</span>
+];
+
+<span class="kw">let</span> pyramidAngle = <span class="num">0</span>;
+
+<span class="fn">startAnimation</span>(<span class="kw">function</span>() {
+  <span class="kw">const</span> projected = pyramidVertices.<span class="fn">map</span>(v => {
+    <span class="kw">let</span> r = <span class="fn">rotateY</span>(v[<span class="num">0</span>], v[<span class="num">1</span>], v[<span class="num">2</span>], pyramidAngle);
+    r = <span class="fn">rotateX</span>(r.x, r.y, r.z, pyramidAngle * <span class="num">0.3</span>);
+    <span class="kw">const</span> p = <span class="fn">project3D</span>(r.x, r.y, r.z);
+    <span class="cm">// Shift to upper-right</span>
+    <span class="kw">return</span> { x: p.x + <span class="num">400</span>, y: p.y - <span class="num">200</span> };
+  });
+
+  <span class="fn">drawTriangles</span>([
+    <span class="cm">// Base</span>
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">1</span>].x, y2:projected[<span class="num">1</span>].y, x3:projected[<span class="num">2</span>].x, y3:projected[<span class="num">2</span>].y, color:<span class="num">0x4488FF</span> },
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">2</span>].x, y2:projected[<span class="num">2</span>].y, x3:projected[<span class="num">3</span>].x, y3:projected[<span class="num">3</span>].y, color:<span class="num">0x4488FF</span> },
+    <span class="cm">// Front</span>
+    { x1:projected[<span class="num">0</span>].x, y1:projected[<span class="num">0</span>].y, x2:projected[<span class="num">1</span>].x, y2:projected[<span class="num">1</span>].y, x3:projected[<span class="num">4</span>].x, y3:projected[<span class="num">4</span>].y, color:<span class="num">0x00FFFF</span> },
+    <span class="cm">// Right</span>
+    { x1:projected[<span class="num">1</span>].x, y1:projected[<span class="num">1</span>].y, x2:projected[<span class="num">2</span>].x, y2:projected[<span class="num">2</span>].y, x3:projected[<span class="num">4</span>].x, y3:projected[<span class="num">4</span>].y, color:<span class="num">0x00FF88</span> },
+    <span class="cm">// Back</span>
+    { x1:projected[<span class="num">2</span>].x, y1:projected[<span class="num">2</span>].y, x2:projected[<span class="num">3</span>].x, y2:projected[<span class="num">3</span>].y, x3:projected[<span class="num">4</span>].x, y3:projected[<span class="num">4</span>].y, color:<span class="num">0x88FF00</span> },
+    <span class="cm">// Left</span>
+    { x1:projected[<span class="num">3</span>].x, y1:projected[<span class="num">3</span>].y, x2:projected[<span class="num">0</span>].x, y2:projected[<span class="num">0</span>].y, x3:projected[<span class="num">4</span>].x, y3:projected[<span class="num">4</span>].y, color:<span class="num">0xFFFF00</span> },
+  ]);
+
+  pyramidAngle += <span class="num">0.03</span>;
+});</pre>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.4.1/pixi.min.js"></script>
+    <script>
+    function rotateY(x,y,z,a){return{x:x*Math.cos(a)+z*Math.sin(a),y,z:-x*Math.sin(a)+z*Math.cos(a)};}
+    function rotateX(x,y,z,a){return{x,y:y*Math.cos(a)-z*Math.sin(a),z:y*Math.sin(a)+z*Math.cos(a)};}
+    function project3D(x,y,z,cx,cy){const f=400,s=f/(f+z);return{x:x*s+(cx||0),y:y*s+(cy||0)};}
+
+    // LISSAJOUS
+    (async()=>{
+        const app=new PIXI.Application();
+        await app.init({width:260,height:200,background:0x0a0a12,antialias:true});
+        document.getElementById('canvas-lissajous').appendChild(app.canvas);
+        const str='MATHEMATICAL';
+        const chars=str.split('').map(c=>{
+            const t=new PIXI.Text({text:c,style:{fontFamily:'monospace',fontSize:14,fill:0xFFFF00}});
+            t.anchor.set(0.5); app.stage.addChild(t); return t;
+        });
+        let time=0;
+        app.ticker.add(()=>{
+            chars.forEach((c,i)=>{
+                const t=(i/chars.length)*Math.PI*2+time;
+                c.x=130+60*Math.sin(3*t+Math.PI/4);
+                c.y=100+45*Math.sin(2*t);
+            });
+            time+=0.03;
+        });
+    })();
+
+    // DOUBLE HELIX
+    (async()=>{
+        const app=new PIXI.Application();
+        await app.init({width:260,height:200,background:0x0a0a12,antialias:true});
+        document.getElementById('canvas-helix').appendChild(app.canvas);
+        const str='PINKELEPHANTS';
+        const chars=str.split('').map(c=>{
+            const t=new PIXI.Text({text:c,style:{fontFamily:'monospace',fontSize:13,fill:0xFF00FF}});
+            t.anchor.set(0.5); app.stage.addChild(t); return t;
+        });
+        let time=0;
+        app.ticker.add(()=>{
+            chars.forEach((c,i)=>{
+                const t=(i/chars.length)*Math.PI*6+time;
+                c.x=130+Math.cos(t)*22;
+                c.y=100+Math.sin(t)*55;
+            });
+            time+=0.05;
+        });
+    })();
+
+    // CUBE
+    (async()=>{
+        const app=new PIXI.Application();
+        await app.init({width:260,height:200,background:0x0a0a12,antialias:true});
+        document.getElementById('canvas-cube').appendChild(app.canvas);
+        const gfx=new PIXI.Graphics(); app.stage.addChild(gfx);
+        const verts=[[-60,-60,-60],[60,-60,-60],[60,60,-60],[-60,60,-60],[-60,-60,60],[60,-60,60],[60,60,60],[-60,60,60]];
+        let angle=0;
+        app.ticker.add(()=>{
+            gfx.clear();
+            const p=verts.map(v=>{let r=rotateY(v[0],v[1],v[2],angle);r=rotateX(r.x,r.y,r.z,angle*0.5);return project3D(r.x,r.y,r.z,130,100);});
+            const tri=(a,b,c,col)=>gfx.poly([p[a].x,p[a].y,p[b].x,p[b].y,p[c].x,p[c].y]).fill(col);
+            tri(4,5,6,0xFF0000);tri(4,6,7,0xFF0000);
+            tri(0,1,2,0x880000);tri(0,2,3,0x880000);
+            tri(1,5,6,0xFF8800);tri(1,6,2,0xFF8800);
+            tri(0,4,7,0xCC6600);tri(0,7,3,0xCC6600);
+            tri(3,2,6,0xFFFF00);tri(3,6,7,0xFFFF00);
+            tri(0,1,5,0xCCCC00);tri(0,5,4,0xCCCC00);
+            angle+=0.02;
+        });
+    })();
+
+    // PYRAMID
+    (async()=>{
+        const app=new PIXI.Application();
+        await app.init({width:260,height:200,background:0x0a0a12,antialias:true});
+        document.getElementById('canvas-pyramid').appendChild(app.canvas);
+        const gfx=new PIXI.Graphics(); app.stage.addChild(gfx);
+        const verts=[[-70,70,-70],[70,70,-70],[70,70,70],[-70,70,70],[0,-90,0]];
+        let angle=0;
+        app.ticker.add(()=>{
+            gfx.clear();
+            const p=verts.map(v=>{let r=rotateY(v[0],v[1],v[2],angle);r=rotateX(r.x,r.y,r.z,angle*0.3);return project3D(r.x,r.y,r.z,130,110);});
+            const tri=(a,b,c,col)=>gfx.poly([p[a].x,p[a].y,p[b].x,p[b].y,p[c].x,p[c].y]).fill(col);
+            tri(0,1,2,0x4488FF);tri(0,2,3,0x4488FF);
+            tri(0,1,4,0x00FFFF);tri(1,2,4,0x00FF88);
+            tri(2,3,4,0x88FF00);tri(3,0,4,0xFFFF00);
+            angle+=0.03;
+        });
+    })();
+    </script>
+
+</body>
+
+</html>

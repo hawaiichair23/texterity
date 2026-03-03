@@ -8,54 +8,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Instrument+Serif&display=swap" rel="stylesheet">    <!-- Load all local fonts from fonts/ directory -->
     <script>
-        // Dynamically load all fonts from fonts/ directory on startup
-        (async function() {
+        // Dynamically register all local fonts via @font-face (no preloading)
+        (function() {
             const fs = require('fs');
             const path = require('path');
             const fontsDir = path.join(__dirname, '..', 'fonts');
             
             try {
                 const files = fs.readdirSync(fontsDir);
-                const ttfFiles = files.filter(f => f.endsWith('.ttf') || f.endsWith('.otf'));
+                const fontFiles = files.filter(f => f.endsWith('.ttf') || f.endsWith('.otf'));
                 
-                const fontNames = [];
-                
-                ttfFiles.forEach(file => {
+                fontFiles.forEach(file => {
                     const isOtf = file.endsWith('.otf');
                     const fontName = file.replace(/\.(ttf|otf)$/, '').replace(/-/g, ' ');
-                    fontNames.push(fontName);
                     const fontPath = path.join(fontsDir, file);
-                    
-                    // Read font file as base64
                     const fontData = fs.readFileSync(fontPath);
                     const base64Font = fontData.toString('base64');
                     const fontFormat = isOtf ? 'opentype' : 'truetype';
                     const mimeType = isOtf ? 'font/otf' : 'font/truetype';
                     
                     const style = document.createElement('style');
-                    style.textContent = `
-                        @font-face {
-                            font-family: "${fontName}";
-                            src: url(data:${mimeType};charset=utf-8;base64,${base64Font}) format("${fontFormat}");
-                        }
-                    `;
+                    style.textContent = `@font-face { font-family: "${fontName}"; src: url(data:${mimeType};charset=utf-8;base64,${base64Font}) format("${fontFormat}"); }`;
                     document.head.appendChild(style);
                 });
                 
-                console.log(`[Overlay] Added ${ttfFiles.length} @font-face rules`);
-                
-                // Load the fonts into memory
-                for (const fontName of fontNames) {
-                    try {
-                        await document.fonts.load(`12px "${fontName}"`);
-                    } catch (err) {
-                        console.warn(`[Overlay] Failed to preload ${fontName}:`, err.message);
-                    }
-                }
-                
-                console.log(`[Overlay] Preloaded ${fontNames.length} fonts into memory`);
+                console.log(`[Overlay] Registered ${fontFiles.length} fonts`);
             } catch (error) {
-                console.error('[Overlay] Failed to load fonts:', error);
+                console.error('[Overlay] Failed to register fonts:', error);
             }
         })();
     </script>

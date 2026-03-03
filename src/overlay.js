@@ -82,7 +82,6 @@ class TextObject {
         this.dragOffset = { x: 0, y: 0 };
         this.customPosition = null;
         this.charState = [];
-        this.lastRenderKey = '';
         this.lastText = '';
         this.loopTimeout = null;
         this.isFocused = false;        this.settings = {
@@ -238,7 +237,6 @@ class TextObject {
             if (this.isDragging) {
                 app.stage.off('pointermove', onDragMove);
                 // Position is already saved during drag, just mark we're done
-                this.lastRenderKey = `${this.lastText}__${this.settings.fontSize}`;
                 this.isDragging = false;
                 this.container.alpha = 1;
                 // Keep focused after drag
@@ -258,7 +256,7 @@ class TextObject {
         this.hitBox.on('pointerdown', onDragStart);
         app.stage.on('pointerup', onDragEnd);
         app.stage.on('pointerupoutside', onDragEnd);
-    }    animateText(inputText, skipLoopSetup = false) {
+    }    animateText(inputText) {
         this.lastText = inputText;
         this.container.scale.set(1);
         this.container.x = 0;
@@ -588,7 +586,6 @@ class TextObject {
             currentY += lineHeights[i];
         }
         
-        this.lastRenderKey = `${inputText}__${this.settings.fontSize}`;
         const totalChars = inputText.replace(/\n/g, '').length;
         if (this.charState.length !== totalChars) {
             this.initCharState(totalChars);
@@ -664,6 +661,7 @@ class TextObject {
 
     // Initialize charState to defaults for the current text length
     initCharState(length) {
+        const old = this.charState;
         this.charState = [];
         for (let i = 0; i < length; i++) {
             this.charState.push({ scale: 1, baseX: 0, baseY: 0, offsetX: 0, offsetY: 0, jitterX: 0, jitterY: 0, color: null });
@@ -682,8 +680,8 @@ class TextObject {
                 char.scale.set(state.scale);
                 char.x = state.baseX + state.offsetX + state.jitterX;
                 char.y = state.baseY + state.offsetY + state.jitterY;
-                if (state.color !== null && char.style) {
-                    char.style.fill = state.color;
+                if (state.color !== null) {
+                    char.tint = state.color;
                 }
                 charIndex++;
             });
@@ -694,7 +692,7 @@ class TextObject {
     setCharacterSize(sizes) {
         sizes.forEach((size, i) => {
             if (size != null) {
-                if (!this.charState[i]) this.charState[i] = { scale: 1, offsetX: 0, offsetY: 0, color: null };
+                if (!this.charState[i]) this.charState[i] = { scale: 1, offsetX: 0, offsetY: 0 };
                 this.charState[i].scale = size;
             }
         });
@@ -725,17 +723,18 @@ class TextObject {
         this.applyCharState();
     }
 
+
     // Set per-character colors
     setCharacterColors(colors) {
         colors.forEach((color, i) => {
             if (color !== undefined) {
-                if (!this.charState[i]) this.charState[i] = { scale: 1, offsetX: 0, offsetY: 0, color: null };
+                if (!this.charState[i]) this.charState[i] = { scale: 1, baseX: 0, baseY: 0, offsetX: 0, offsetY: 0, jitterX: 0, jitterY: 0, color: null };
                 this.charState[i].color = color;
             }
         });
         this.applyCharState();
     }
-    
+
     destroy() {
         if (this.loopTimeout) {
             clearTimeout(this.loopTimeout);
@@ -793,7 +792,7 @@ function setupGlobalLoop() {
             textObjects.forEach(textObj => {
                 // ONLY restart if loopAnimation is true (excludes script-controlled text)
                 if (textObj.settings.loopAnimation && textObj.lastText.trim()) {
-                    textObj.animateText(textObj.lastText, true);
+                    textObj.animateText(textObj.lastText);
                 }
             });
         }, 2000);
@@ -924,6 +923,7 @@ ipcRenderer.on('update-character-offsets', (event, data) => {
         textObj.setCharacterOffsets(data.offsets);
     }
 });
+
 
 ipcRenderer.on('update-character-colors', (event, data) => {
     const textObj = textObjects.get(data.id);
@@ -1135,7 +1135,6 @@ ipcRenderer.on('reset-text-position', (event, data) => {
     if (textObj && textObj.lastText.trim()) {
         // Clear custom position and saved line positions to force recalculation
         textObj.customPosition = null;
-        textObj.lastRenderKey = '';
         
         // Re-render the text, which will center it
         textObj.animateText(textObj.lastText);
