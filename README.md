@@ -17,6 +17,9 @@ In click-through mode, text objects temporarily suspend click-through only when 
 
 The scripting engine exposes an API surface to every text object on the overlay. From a script you can set text content and animate individual characters by adjusting their X/Y offsets, scale, color, and timing, either manually or through built-in helpers like `waveEffect`, `spiralInEffect`, and `fadeIn`. Characters are individually controllable while the word's font, size, and kerning are preserved so effects stay typographically clean. The editor includes full syntax highlighting, autocomplete, and an integrated console.
 
+
+<img width="1664" height="720" alt="ev" src="https://github.com/user-attachments/assets/4fcc47ca-47e5-4d89-b5d9-dfce2e6dcab2" />
+
 ## Features
 
 - **Multiple text objects** — create, position, and style independently
