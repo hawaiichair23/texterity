@@ -50,7 +50,7 @@ Texterity runs as two Electron windows communicating over IPC:
 
 **Stream event integration** — Texterity will connect directly to streaming platform events (subscriptions, donations, chat triggers, raids) so text objects and scripts can react without any middleware.
 
-**GPU pipeline** — the rendering layer is being moved toward a fully GPU-driven pipeline for high framerate animations at scale.
+**GPU pipeline** — The rendering layer is being moved toward a fully GPU-driven pipeline for high framerate animations at scale.
 
 **Video export** — Scripts can be layered and offset so animations will start at a specific point in a video. The overlay renders to a transparent WebM, which ffmpeg composites directly onto the source file. Drop in the video, set timecode and export. No After Effects expertise required.
 
