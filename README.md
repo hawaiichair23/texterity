@@ -40,10 +40,10 @@ Texterity includes a software 3D rendering pipeline built directly on top of Pix
 
 ## Architecture
 
-Texterity runs as two Electron windows communicating over IPC:
+Texterity runs as two separate Electron windows communicating over IPC:
 
 - **Control panel** — the UI for managing text objects, animations, scripts, and settings
-- **Overlay** — a transparent frameless window rendered entirely with PixiJS, sitting over your desktop
+- **Overlay** — a transparency-enabled window rendered with PixiJS
 
 
 ## Roadmap
